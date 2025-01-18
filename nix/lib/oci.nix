@@ -13,7 +13,59 @@ let
 in
 {
   options.lib = {
-    mkManifestPath = mkOption {
+    mkOCIPulledManifestLockUpdateScript = mkOption {
+      description = mdDoc "";
+      type = types.functionTo types.package;
+      default = { pkgs, self, nix2container, pulledOCI }:
+          let
+            manifestRootPath = cfg.lib.mkOCIPulledManifestLockRelativeRootPath {
+              inherit (cfg.oci) fromImageManifestRootPath;
+              inherit self;
+            };
+            update = lib.concatStringsSep "\n" (
+              lib.mapAttrsToList (
+                containerName: container:
+                let
+                  inherit (config.oci.containers.${containerName}) fromImage;
+                  manifestPath = cfg.lib.mkOCIPulledManifestLockRelativePath {
+                    inherit (cfg.oci) fromImageManifestRootPath;
+                    inherit fromImage;
+                    inherit self;
+                  };
+                  manifest = cfg.lib.mkOCIPulledManifestLock {
+                    inherit nix2container;
+                    inherit (cfg.oci) fromImageManifestRootPath;
+                    inherit fromImage;
+                  };
+                in
+                ''
+                  declare -g manifest
+                  manifest=$(${manifest.getManifest}/bin/get-manifest)
+                  if [ -f "${manifestPath}" ]; then
+                    currentContent=$(cat "${manifestPath}")
+                    newContent=$(echo "$manifest")
+                    if [ "$currentContent" != "$newContent" ]; then
+                      printf "Updating lock manifest for ${containerName}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
+                      echo "$manifest" > "${manifestPath}"
+                    fi
+                  else
+                    printf "Generating lock manifest for ${containerName}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
+                    echo "$manifest" > "${manifestPath}"
+                  fi
+                ''
+              ) pulledOCI
+            );
+          in
+          pkgs.writeShellScriptBin "update-pulled-oci-manifests-locks" ''
+            set -o errexit
+            set -o pipefail
+            set -o nounset
+
+            mkdir -p "${manifestRootPath}"
+            ${update}
+          '';
+    };
+    mkOCIPulledManifestLockPath = mkOption {
       description = mdDoc "";
       type = types.functionTo types.path;
       default =
@@ -26,7 +78,7 @@ in
         in
         /${fromImageManifestRootPath}/${name}-${fromImage.imageTag}-manifest-lock.json;
     };
-    mkRelativeManifestRootPath = mkOption {
+    mkOCIPulledManifestLockRelativeRootPath= mkOption {
       description = mdDoc "";
       type = types.functionTo types.str;
       default =
@@ -36,7 +88,7 @@ in
           toString rootPathConfig.fromImageManifestRootPath
         );
     };
-    mkRelativeManifestPath = mkOption {
+    mkOCIPulledManifestLockRelativePath = mkOption {
       description = mdDoc "";
       type = types.functionTo types.str;
       default =
@@ -44,7 +96,7 @@ in
         "./"
         + lib.strings.replaceStrings [ ((toString rootPathConfig.self) + "/") ] [ "" ] (
           toString (
-            cfg.mkManifestPath {
+            cfg.mkOCIPulledManifestLockPath {
               inherit (rootPathConfig)
                 fromImageManifestRootPath
                 fromImage
@@ -53,7 +105,7 @@ in
           )
         );
     };
-    mkManifest = mkOption {
+    mkOCIPulledManifestLock = mkOption {
       description = mdDoc "A function to build oci manifest to pull";
       type = types.functionTo types.package;
       default =
@@ -64,7 +116,7 @@ in
         }:
         let
           fromImage' = fromImage // {
-            imageManifest = cfg.mkManifestPath {
+            imageManifest = cfg.mkOCIPulledManifestLockPath {
               inherit fromImageManifestRootPath fromImage;
             };
           };
@@ -115,7 +167,7 @@ in
           tag = tag';
           fromImage =
             if fromImage != { } then
-              (cfg.mkManifest {
+              (cfg.mkOCIPulledManifestLock {
                 inherit nix2container fromImageManifestRootPath fromImage;
               })
             else

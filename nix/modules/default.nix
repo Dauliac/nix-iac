@@ -132,8 +132,8 @@ in
                 localflake.inputs.nix2container.packages.${system}.nix2container.pullImageFromManifest
                   containerConfig.fromImage
                 // {
-                  imageManifest = cfg.lib.mkManifestPath {
-                    inherit (cfg.oci) fromImageManifestRootPath;
+                  imageManifest = cfg.lib.mkOCIPulledManifestLockPath {
+                    inherit  (cfg.oci) fromImageManifestRootPath;
                     inherit (containerConfig) fromImage;
                   };
                 }
@@ -164,53 +164,7 @@ in
           }
         ) { } (attrsets.attrNames oci);
         updatePulledOCIManifestLocks =
-          let
-            manifestRootPath = localflake.config.lib.mkRelativeManifestRootPath {
-              inherit (cfg.oci) fromImageManifestRootPath;
-              inherit self;
-            };
-            update = lib.concatStringsSep "\n" (
-              lib.mapAttrsToList (
-                containerName: container:
-                let
-                  inherit (config.oci.containers.${containerName}) fromImage;
-                  manifestPath = localflake.config.lib.mkRelativeManifestPath {
-                    inherit (cfg.oci) fromImageManifestRootPath;
-                    inherit fromImage;
-                    inherit self;
-                  };
-                  manifest = localflake.config.lib.mkManifest {
-                    inherit nix2container;
-                    inherit (cfg.oci) fromImageManifestRootPath;
-                    inherit fromImage;
-                  };
-                in
-                ''
-                  declare -g manifest
-                  manifest=$(${manifest.getManifest}/bin/get-manifest)
-                  if [ -f "${manifestPath}" ]; then
-                    currentContent=$(cat "${manifestPath}")
-                    newContent=$(echo "$manifest")
-                    if [ "$currentContent" != "$newContent" ]; then
-                      printf "Updating lock manifest for ${containerName}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
-                      echo "$manifest" > "${manifestPath}"
-                    fi
-                  else
-                    printf "Generating lock manifest for ${containerName}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
-                    echo "$manifest" > "${manifestPath}"
-                  fi
-                ''
-              ) pulledOCI
-            );
-          in
-          pkgs.writeShellScriptBin "update-pulled-oci-manifests-locks" ''
-            set -o errexit
-            set -o pipefail
-            set -o nounset
-
-            mkdir -p "${manifestRootPath}"
-            ${update}
-          '';
+          localflake.config.lib.mkOCIPulledManifestLockUpdateScript { inherit pkgs self nix2container pulledOCI; };
       in
       {
         apps = {
