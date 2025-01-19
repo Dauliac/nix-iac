@@ -21,24 +21,25 @@ in
           pkgs,
           self,
           nix2container,
+          containers,
           pulledOCI,
         }:
         let
-          manifestRootPath = cfg.lib.mkOCIPulledManifestLockRelativeRootPath {
-            inherit (cfg.oci) fromImageManifestRootPath;
+          manifestRootPath = cfg.mkOCIPulledManifestLockRelativeRootPath {
+            inherit (config.oci) fromImageManifestRootPath;
             inherit self;
           };
           update = lib.concatStringsSep "\n" (
             lib.mapAttrsToList (
               containerName: container:
               let
-                inherit (config.oci.containers.${containerName}) fromImage;
-                manifestPath = cfg.lib.mkOCIPulledManifestLockRelativePath {
-                  inherit (cfg.oci) fromImageManifestRootPath;
+                inherit (containers.${containerName}) fromImage;
+                manifestPath = cfg.mkOCIPulledManifestLockRelativePath {
+                  inherit (config.oci) fromImageManifestRootPath;
                   inherit fromImage;
                   inherit self;
                 };
-                manifest = cfg.lib.mkOCIPulledManifestLock {
+                manifest = cfg.mkOCIPulledManifestLock {
                   inherit nix2container;
                   inherit (cfg.oci) fromImageManifestRootPath;
                   inherit fromImage;
@@ -82,28 +83,30 @@ in
         let
           name = lib.strings.replaceStrings [ "/" ] [ "-" ] fromImage.imageName;
         in
-        /${fromImageManifestRootPath}/${name}-${fromImage.imageTag}-manifest-lock.json;
+        fromImageManifestRootPath + name + "-" + fromImage.imageTag  + "-manifest-lock.json";
     };
     mkOCIPulledManifestLockRelativeRootPath = mkOption {
       description = mdDoc "A function to get relative path lock manifest of to pull OCI";
       type = types.functionTo types.str;
       default =
-        rootPathConfig:
+        args:
         "./"
-        + lib.strings.replaceStrings [ ((toString rootPathConfig.self) + "/") ] [ "" ] (
-          toString rootPathConfig.fromImageManifestRootPath
+        + lib.strings.replaceStrings [ ((toString args.self) + "/") ] [ "" ] (
+          toString args.fromImageManifestRootPath
         );
     };
     mkOCIPulledManifestLockRelativePath = mkOption {
       description = mdDoc "";
       type = types.functionTo types.str;
       default =
-        rootPathConfig:
-        "./"
-        + lib.strings.replaceStrings [ ((toString rootPathConfig.self) + "/") ] [ "" ] (
+        args:
+        "./"     + "  " + (toString args.self) + "  "
+        + "   " + args.fromImageManifestRootPath + "   "
+
+        + lib.strings.replaceStrings [ ((toString args.self) + "/") ] [ "" ] (
           toString (
             cfg.mkOCIPulledManifestLockPath {
-              inherit (rootPathConfig)
+              inherit (args)
                 fromImageManifestRootPath
                 fromImage
                 ;

@@ -32,7 +32,7 @@ in
       };
       fromImageManifestRootPath = mkOption {
         type = types.path;
-        default = ./.oci;
+        default = self + "/.oci/";
         description = "The root path to store the pulled OCI image manifest json lockfiles.";
       };
       registry = mkOption {
@@ -172,6 +172,7 @@ in
             nix2container
             pulledOCI
             ;
+            inherit (config.oci) containers;
         };
       in
       {

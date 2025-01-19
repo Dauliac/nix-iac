@@ -48,6 +48,16 @@
                 ];
                 isRoot = true;
               };
+              nix = {
+                name = "nix";
+                package = pkgs.bash;
+                installNix = true;
+                dependencies = [
+                  pkgs.coreutils
+                ];
+                isRoot = true;
+              };
+
               alpineFromRegistry = {
                 fromImage = {
                   imageName = "library/alpine";
@@ -56,36 +66,36 @@
                   arch = "amd64";
                 };
               };
-              # alpineWithTagOverride = {
-              #   tag = "0.1.0";
-              #   fromImage = {
-              #     imageName = "alpine";
-              #     imageTag = "3.21.2";
-              #     os = "linux";
-              #     arch = "amd64";
-              #   };
-              # };
-              # alpineWithNameAndTagOverride = {
-              #   name = "alpine-test";
-              #   tag = "0.1.0";
-              #   fromImage = {
-              #     imageName = "alpine";
-              #     imageTag = "3.21.1";
-              #     os = "linux";
-              #     arch = "amd64";
-              #   };
-              # };
-              # alpineWithHelloNameAndTagOverride = {
-              #   name = "alpine-test";
-              #   tag = "0.1.0";
-              #   package = pkgs.hello;
-              #   fromImage = {
-              #     imageName = "alpine";
-              #     imageTag = "3.21.2";
-              #     os = "linux";
-              #     arch = "amd64";
-              #   };
-              # };
+              alpineWithTagOverride = {
+                tag = "0.1.0";
+                fromImage = {
+                  imageName = "library/alpine";
+                  imageTag = "3.21.2";
+                  os = "linux";
+                  arch = "amd64";
+                };
+              };
+              alpineWithNameAndTagOverride = {
+                name = "alpine-test";
+                tag = "0.1.0";
+                fromImage = {
+                  imageName = "library/alpine";
+                  imageTag = "3.21.1";
+                  os = "linux";
+                  arch = "amd64";
+                };
+              };
+              alpineWithHelloNameAndTagOverride = {
+                name = "alpine-test";
+                tag = "0.1.0";
+                package = pkgs.hello;
+                fromImage = {
+                  imageName = "library/alpine";
+                  imageTag = "3.21.2";
+                  os = "linux";
+                  arch = "amd64";
+                };
+              };
             };
           };
       };
