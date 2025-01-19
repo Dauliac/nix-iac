@@ -97,7 +97,7 @@ in
         );
     };
     mkOCIPulledManifestLockRelativePath = mkOption {
-      description = mdDoc "";
+      description = mdDoc "Genrate local relive path to download OCI";
       type = types.functionTo types.str;
       default =
         args:
@@ -186,7 +186,7 @@ in
         if args.installNix then cfg.mkNixOCI args' else cfg.mkSimpleOCI args';
     };
     mkSimpleOCI = mkOption {
-      description = mdDoc "A function to build container";
+      description = mdDoc "A function to build simple container";
       type = types.functionTo types.package;
       default =
         args:
