@@ -102,8 +102,6 @@ in
       default =
         args:
         "./"
-        # + "  " + (toString args.self) + "  "
-        # + "   " + args.fromImageManifestRootPath + "   "
         + lib.strings.replaceStrings [ ((toString args.self) + "/") ] [ "" ] (
           toString (
             cfg.mkOCIPulledManifestLockPath {
