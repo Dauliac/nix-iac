@@ -74,7 +74,7 @@ in
                     default = { };
                     example = {
                       imageName = "library/alpine";
-                      imageTag = "latest";
+                      imageTag = "1.2.3";
                       os = "linux";
                       arch = "amd64";
                     };

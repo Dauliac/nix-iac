@@ -42,7 +42,10 @@
               };
               root = {
                 name = "root";
-                package = pkgs.hello;
+                package = pkgs.bash;
+                dependencies = [
+                  pkgs.coreutils
+                ];
                 isRoot = true;
               };
               alpineFromRegistry = {

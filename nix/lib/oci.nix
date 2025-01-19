@@ -169,7 +169,7 @@ in
               else if tag == "" then
                 throw "Empty tag given"
               else
-                "latest";
+                "1.0.0";
             entrypoint =
               if entrypoint != [ ] then
                 entrypoint
