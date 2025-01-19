@@ -16,54 +16,60 @@ in
     mkOCIPulledManifestLockUpdateScript = mkOption {
       description = mdDoc "";
       type = types.functionTo types.package;
-      default = { pkgs, self, nix2container, pulledOCI }:
-          let
-            manifestRootPath = cfg.lib.mkOCIPulledManifestLockRelativeRootPath {
-              inherit (cfg.oci) fromImageManifestRootPath;
-              inherit self;
-            };
-            update = lib.concatStringsSep "\n" (
-              lib.mapAttrsToList (
-                containerName: container:
-                let
-                  inherit (config.oci.containers.${containerName}) fromImage;
-                  manifestPath = cfg.lib.mkOCIPulledManifestLockRelativePath {
-                    inherit (cfg.oci) fromImageManifestRootPath;
-                    inherit fromImage;
-                    inherit self;
-                  };
-                  manifest = cfg.lib.mkOCIPulledManifestLock {
-                    inherit nix2container;
-                    inherit (cfg.oci) fromImageManifestRootPath;
-                    inherit fromImage;
-                  };
-                in
-                ''
-                  declare -g manifest
-                  manifest=$(${manifest.getManifest}/bin/get-manifest)
-                  if [ -f "${manifestPath}" ]; then
-                    currentContent=$(cat "${manifestPath}")
-                    newContent=$(echo "$manifest")
-                    if [ "$currentContent" != "$newContent" ]; then
-                      printf "Updating lock manifest for ${containerName}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
-                      echo "$manifest" > "${manifestPath}"
-                    fi
-                  else
-                    printf "Generating lock manifest for ${containerName}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
+      default =
+        {
+          pkgs,
+          self,
+          nix2container,
+          pulledOCI,
+        }:
+        let
+          manifestRootPath = cfg.lib.mkOCIPulledManifestLockRelativeRootPath {
+            inherit (cfg.oci) fromImageManifestRootPath;
+            inherit self;
+          };
+          update = lib.concatStringsSep "\n" (
+            lib.mapAttrsToList (
+              containerName: container:
+              let
+                inherit (config.oci.containers.${containerName}) fromImage;
+                manifestPath = cfg.lib.mkOCIPulledManifestLockRelativePath {
+                  inherit (cfg.oci) fromImageManifestRootPath;
+                  inherit fromImage;
+                  inherit self;
+                };
+                manifest = cfg.lib.mkOCIPulledManifestLock {
+                  inherit nix2container;
+                  inherit (cfg.oci) fromImageManifestRootPath;
+                  inherit fromImage;
+                };
+              in
+              ''
+                declare -g manifest
+                manifest=$(${manifest.getManifest}/bin/get-manifest)
+                if [ -f "${manifestPath}" ]; then
+                  currentContent=$(cat "${manifestPath}")
+                  newContent=$(echo "$manifest")
+                  if [ "$currentContent" != "$newContent" ]; then
+                    printf "Updating lock manifest for ${containerName}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
                     echo "$manifest" > "${manifestPath}"
                   fi
-                ''
-              ) pulledOCI
-            );
-          in
-          pkgs.writeShellScriptBin "update-pulled-oci-manifests-locks" ''
-            set -o errexit
-            set -o pipefail
-            set -o nounset
+                else
+                  printf "Generating lock manifest for ${containerName}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
+                  echo "$manifest" > "${manifestPath}"
+                fi
+              ''
+            ) pulledOCI
+          );
+        in
+        pkgs.writeShellScriptBin "update-pulled-oci-manifests-locks" ''
+          set -o errexit
+          set -o pipefail
+          set -o nounset
 
-            mkdir -p "${manifestRootPath}"
-            ${update}
-          '';
+          mkdir -p "${manifestRootPath}"
+          ${update}
+        '';
     };
     mkOCIPulledManifestLockPath = mkOption {
       description = mdDoc "";
@@ -78,7 +84,7 @@ in
         in
         /${fromImageManifestRootPath}/${name}-${fromImage.imageTag}-manifest-lock.json;
     };
-    mkOCIPulledManifestLockRelativeRootPath= mkOption {
+    mkOCIPulledManifestLockRelativeRootPath = mkOption {
       description = mdDoc "";
       type = types.functionTo types.str;
       default =
@@ -127,99 +133,105 @@ in
       description = mdDoc "A function to build container";
       type = types.functionTo types.package;
       default =
-        {
+        args@{
           pkgs,
           nix2container,
           fromImageManifestRootPath,
           package ? null,
-          tag ? null,
-          name ? null,
-          entrypoint ? [
-            "/bin/${package.name}"
-            "$@"
-          ],
+          isRoot ? false,
+          installNix ? false,
+          user ? "",
+          tag ? "",
+          name ? "",
+          entrypoint ? [ ],
           dependencies ? [ ],
           fromImage ? { },
-          user ? package.meta.mainProgram,
         }:
         let
-          name' =
-            if name != null && name != "" then
-              name
-            else if package != null then
-              lib.strings.toLower package.meta.mainProgram
-            else if fromImage != { } then
-              lib.strings.toLower fromImage.imageName
-            else
-              throw "Error: No valid source for name (name, package.meta.mainProgram, or fromImage.imageName) found.";
-          tag' =
-            if tag != null && tag != "" then
-              # tag
-              "toto"
-            else if package != null then
-              package.version
-            else if fromImage != { } then
-              fromImage.imageTag
-            else
-              "latest";
+          args' = args // {
+            user = if isRoot then "root" else package.meta.mainProgram;
+            name =
+              if name != null then
+                if name == "" then throw "Empty name given" else name
+              else if package != null then
+                lib.strings.toLower package.meta.mainProgram
+              else if fromImage != { } then
+                lib.strings.toLower fromImage.imageName
+              else if name == "" then
+                throw "Empty name given"
+              else
+                throw "Error: No valid source for name (name, package.meta.mainProgram, or fromImage.imageName) found.";
+            tag =
+              if package != null then
+                package.version
+              else if fromImage != { } then
+                fromImage.imageTag
+              else if tag == "" then
+                throw "Empty tag given"
+              else
+                "latest";
+            entrypoint =
+              if entrypoint != [ ] then
+                entrypoint
+              else if package != null then
+                [
+                  "/bin/${package.meta.mainProgram}"
+                ]
+              else
+                [ ];
+          };
         in
-        nix2container.buildImage {
-          tag = tag';
+        if args.installNix then cfg.mkNixOCI args' else cfg.mkSimpleOCI args';
+    };
+    mkSimpleOCI = mkOption {
+      description = mdDoc "A function to build container";
+      type = types.functionTo types.package;
+      default =
+        args:
+        (args.nix2container.buildImage {
+          inherit (args) tag name;
           fromImage =
-            if fromImage != { } then
+            if args.fromImage != { } then
               (cfg.mkOCIPulledManifestLock {
-                inherit nix2container fromImageManifestRootPath fromImage;
+                inherit (args) nix2container fromImageManifestRootPath fromImage;
               })
             else
               "";
-          name = name';
           copyToRoot = [
             (cfg.mkRoot {
-              inherit pkgs package dependencies;
+              inherit (args) pkgs package dependencies;
             })
           ];
           config = {
-            inherit entrypoint;
+            inherit (args) entrypoint;
             Env = [
               "PATH=/bin"
-              "USER=${user}"
+              "USER=${args.user}"
             ];
           };
-        };
+        });
     };
     mkNixOCI = mkOption {
       description = mdDoc "A function to build nix container";
       type = types.functionTo types.package;
       default =
-        {
-          name,
-          tag,
-          pkgs,
-          packages,
-          entrypoint,
-          nix2container,
-          user ? "root",
-        }:
-        nix2container.buildImage {
-          inherit name;
-          inherit tag;
+        args:
+        args.nix2container.buildImage {
+          inherit (args) name tag;
           initializeNixDatabase = true;
           copyToRoot = [
             cfg.mkRoot
             {
-              inherit pkgs;
-              inherit packages;
+              inherit (args) pkgs package;
             }
           ];
           layers = [
-            (cfg.mkNixLayer {
-              inherit user;
-              inherit pkgs;
-              inherit nix2container;
+            (cfg.mkNixOCILayer {
+              inherit (args) user pkgs nix2container;
             })
           ];
           config = {
-            inherit entrypoint;
+            inherit (args) entrypoint;
           };
         };
     };
@@ -227,19 +239,18 @@ in
       description = mdDoc "A function to build nix container";
       type = types.package;
       default =
-        {
-          user,
-          pkgs,
-          nix2container,
-        }:
-        nix2container.buildLayer {
+        args:
+        args.nix2container.buildLayer {
           copyToRoot = [
-            (pkgs.buildEnv {
+            (args.pkgs.buildEnv {
               name = "root";
-              paths = [
-                pkgs.coreutils
-                pkgs.nix
-              ] ++ (config.lib.oci.mkNixShadowSetup pkgs);
+              paths =
+                with args.pkgs;
+                [
+                  coreutils
+                  nix
+                ]
+                ++ (config.lib.oci.mkNixShadowSetup pkgs);
               pathsToLink = [
                 "/bin"
                 "/etc"
@@ -249,7 +260,7 @@ in
           config = {
             Env = [
               "NIX_PAGER=cat"
-              "USER=${user}"
+              "USER=${args.user}"
               "HOME=/"
             ];
           };

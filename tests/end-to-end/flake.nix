@@ -40,6 +40,11 @@
                   pkgs.kubectl-cnpg
                 ];
               };
+              root = {
+                name = "root";
+                package = pkgs.hello;
+                isRoot = true;
+              };
               alpineFromRegistry = {
                 fromImage = {
                   imageName = "library/alpine";

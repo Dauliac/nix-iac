@@ -133,7 +133,7 @@ in
                   containerConfig.fromImage
                 // {
                   imageManifest = cfg.lib.mkOCIPulledManifestLockPath {
-                    inherit  (cfg.oci) fromImageManifestRootPath;
+                    inherit (cfg.oci) fromImageManifestRootPath;
                     inherit (containerConfig) fromImage;
                   };
                 }
@@ -151,6 +151,8 @@ in
               tag
               name
               dependencies
+              isRoot
+              installNix
               fromImage
               ;
             inherit nix2container;
@@ -163,26 +165,32 @@ in
             "oci-${containerName}" = oci.${containerName};
           }
         ) { } (attrsets.attrNames oci);
-        updatePulledOCIManifestLocks =
-          localflake.config.lib.mkOCIPulledManifestLockUpdateScript { inherit pkgs self nix2container pulledOCI; };
+        updatePulledOCIManifestLocks = localflake.config.lib.mkOCIPulledManifestLockUpdateScript {
+          inherit
+            pkgs
+            self
+            nix2container
+            pulledOCI
+            ;
+        };
       in
       {
         apps = {
-          oci-updatePulledManifestLocks = {
+          oci-updatePulledManifestsLocks = {
             type = "app";
             program = updatePulledOCIManifestLocks;
           };
         };
         packages = lib.mkMerge [
           {
-            oci-updatePulledManifestLocks = updatePulledOCIManifestLocks;
+            oci-updatePulledManifestsLocks = updatePulledOCIManifestLocks;
           }
           prefixedOCI
         ];
         devShells.default = mkIf cfg.oci.enableDevShell (
           pkgs.mkShell {
             shellHook = ''
-              ${config.packages.oci-updatePulledManifestLocks}/bin/update-pulled-oci-manifests-locks
+              ${config.packages.oci-updatePulledManifestsLocks}/bin/update-pulled-oci-manifests-locks
 
             '';
           }
