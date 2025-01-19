@@ -18,7 +18,7 @@
       ];
       config = {
         oci.enabled = true;
-        oci.fromImageManifestRootPath = ./.oci;
+        # oci.fromImageManifestRootPath = ./aaa;
         systems = [
           "x86_64-linux"
         ];

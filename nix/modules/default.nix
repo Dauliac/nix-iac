@@ -170,9 +170,9 @@ in
             pkgs
             self
             nix2container
-            pulledOCI
-            ;
-            inherit (config.oci) containers;
+            pulledOCI ;
+          inherit (config.oci) containers;
+          inherit (cfg.oci) fromImageManifestRootPath;
         };
       in
       {

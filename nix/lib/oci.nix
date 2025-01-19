@@ -23,10 +23,11 @@ in
           nix2container,
           containers,
           pulledOCI,
+          fromImageManifestRootPath,
         }:
         let
           manifestRootPath = cfg.mkOCIPulledManifestLockRelativeRootPath {
-            inherit (config.oci) fromImageManifestRootPath;
+            inherit fromImageManifestRootPath;
             inherit self;
           };
           update = lib.concatStringsSep "\n" (
@@ -35,13 +36,13 @@ in
               let
                 inherit (containers.${containerName}) fromImage;
                 manifestPath = cfg.mkOCIPulledManifestLockRelativePath {
-                  inherit (config.oci) fromImageManifestRootPath;
+                  inherit fromImageManifestRootPath;
                   inherit fromImage;
                   inherit self;
                 };
                 manifest = cfg.mkOCIPulledManifestLock {
                   inherit nix2container;
-                  inherit (cfg.oci) fromImageManifestRootPath;
+                  inherit fromImageManifestRootPath;
                   inherit fromImage;
                 };
               in
@@ -100,9 +101,9 @@ in
       type = types.functionTo types.str;
       default =
         args:
-        "./"     + "  " + (toString args.self) + "  "
-        + "   " + args.fromImageManifestRootPath + "   "
-
+        "./"
+        # + "  " + (toString args.self) + "  "
+        # + "   " + args.fromImageManifestRootPath + "   "
         + lib.strings.replaceStrings [ ((toString args.self) + "/") ] [ "" ] (
           toString (
             cfg.mkOCIPulledManifestLockPath {
