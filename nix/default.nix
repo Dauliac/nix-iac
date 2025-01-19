@@ -29,18 +29,19 @@ in
         ...
       }:
       {
-        oci.containers = {
-          toto = {
-            tag = "0.1.0";
-            package = pkgs.cypress;
-            dependencies = [
-              pkgs.bash
-              pkgs.firefox
-              pkgs.nacl
-            ];
-            isRoot = true;
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [
+            cosign # TODO: implement cosign script generation
+            open-policy-agent
+            trivy
+            dive
+          ] ++ [
+            inputs'.nix2container.packages.skopeo-nix2container
+          ];
+          shellHook = ''
+            ${config.packages.oci-updatePulledManifestsLocks}/bin/update-pulled-oci-manifests-locks
+            '';
           };
-        };
       };
   };
 }

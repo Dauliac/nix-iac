@@ -28,7 +28,7 @@ in
       enableDevShell = mkOption {
         type = types.bool;
         description = "Enable the dev shell.";
-        default = true;
+        default = false;
       };
       fromImageManifestRootPath = mkOption {
         type = types.path;

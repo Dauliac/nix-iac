@@ -18,7 +18,7 @@
       ];
       config = {
         oci.enabled = true;
-        # oci.fromImageManifestRootPath = ./aaa;
+        oci.enableDevShell = true;
         systems = [
           "x86_64-linux"
         ];
