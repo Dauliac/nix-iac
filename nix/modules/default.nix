@@ -192,7 +192,6 @@ in
           pkgs.mkShell {
             shellHook = ''
               ${config.packages.oci-updatePulledManifestsLocks}/bin/update-pulled-oci-manifests-locks
-
             '';
           }
         );
