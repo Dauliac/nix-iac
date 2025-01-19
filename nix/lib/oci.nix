@@ -14,7 +14,7 @@ in
 {
   options.lib = {
     mkOCIPulledManifestLockUpdateScript = mkOption {
-      description = mdDoc "";
+      description = mdDoc "A function to build script to update pulled OCI manifests locks";
       type = types.functionTo types.package;
       default =
         {
@@ -72,7 +72,7 @@ in
         '';
     };
     mkOCIPulledManifestLockPath = mkOption {
-      description = mdDoc "";
+      description = mdDoc "A function to build OCI manifest to pull";
       type = types.functionTo types.path;
       default =
         {
@@ -85,7 +85,7 @@ in
         /${fromImageManifestRootPath}/${name}-${fromImage.imageTag}-manifest-lock.json;
     };
     mkOCIPulledManifestLockRelativeRootPath = mkOption {
-      description = mdDoc "";
+      description = mdDoc "A function to get relative path lock manifest of to pull OCI";
       type = types.functionTo types.str;
       default =
         rootPathConfig:
@@ -112,7 +112,7 @@ in
         );
     };
     mkOCIPulledManifestLock = mkOption {
-      description = mdDoc "A function to build oci manifest to pull";
+      description = mdDoc "A function to build OCI manifest to pull";
       type = types.functionTo types.package;
       default =
         {

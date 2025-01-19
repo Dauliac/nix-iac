@@ -33,7 +33,7 @@ in
       fromImageManifestRootPath = mkOption {
         type = types.path;
         default = ./.oci;
-        description = "The root path to store the pulled oci image manifest json lockfiles.";
+        description = "The root path to store the pulled OCI image manifest json lockfiles.";
       };
       registry = mkOption {
         type = types.str;
