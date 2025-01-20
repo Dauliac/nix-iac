@@ -84,7 +84,7 @@ in
         let
           name = lib.strings.replaceStrings [ "/" ] [ "-" ] fromImage.imageName;
         in
-        fromImageManifestRootPath + name + "-" + fromImage.imageTag  + "-manifest-lock.json";
+        fromImageManifestRootPath + name + "-" + fromImage.imageTag + "-manifest-lock.json";
     };
     mkOCIPulledManifestLockRelativeRootPath = mkOption {
       description = mdDoc "A function to get relative path lock manifest of to pull OCI";
@@ -97,7 +97,7 @@ in
         );
     };
     mkOCIPulledManifestLockRelativePath = mkOption {
-      description = mdDoc "Genrate local relive path to download OCI";
+      description = mdDoc "Generate local relive path to download OCI";
       type = types.functionTo types.str;
       default =
         args:

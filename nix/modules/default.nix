@@ -27,8 +27,13 @@ in
       };
       enableDevShell = mkOption {
         type = types.bool;
-        description = "Enable the dev shell.";
+        description = "Enable the flake dev shell.";
         default = false;
+      };
+      enableCheck = mkOption {
+        type = types.bool;
+        description = "Enable the flake checks on built containers.";
+        default = true;
       };
       fromImageManifestRootPath = mkOption {
         type = types.path;
@@ -45,9 +50,20 @@ in
       {
         config,
         pkgs,
+        system,
         ...
       }:
       {
+        options.oci.skopeo = mkOption {
+          type = types.package;
+          description = "The package to use for skopeo.";
+          default = localflake.inputs.nix2container.packages.${system}.skopeo-nix2container;
+        };
+        options.oci.nix2container = mkOption {
+          type = types.attrs;
+          description = "The nix2container package.";
+          default = localflake.inputs.nix2container.packages.${system}.nix2container;
+        };
         options.oci.containers = mkOption {
           type = types.attrsOf (
             types.submodule (
@@ -123,14 +139,13 @@ in
         ...
       }:
       let
-        nix2container = localflake.inputs.nix2container.packages.${system}.nix2container;
+        inherit (config.oci) nix2container;
         pulledOCI =
           attrsets.mapAttrs
             (
               containerName: containerConfig:
               if containerConfig.fromImage != { } then
-                localflake.inputs.nix2container.packages.${system}.nix2container.pullImageFromManifest
-                  containerConfig.fromImage
+                nix2container.pullImageFromManifest containerConfig.fromImage
                 // {
                   imageManifest = cfg.lib.mkOCIPulledManifestLockPath {
                     inherit (cfg.oci) fromImageManifestRootPath;
@@ -170,10 +185,27 @@ in
             pkgs
             self
             nix2container
-            pulledOCI ;
+            pulledOCI
+            ;
           inherit (config.oci) containers;
           inherit (cfg.oci) fromImageManifestRootPath;
         };
+        diveChecks = lib.genAttrs (lib.attrNames oci) (
+          containerName:
+          localflake.config.lib.mkCheckDive {
+            oci = prefixedOCI.${containerName};
+            inherit pkgs;
+            dive = pkgs.dive;
+            inherit (config.oci) skopeo;
+          }
+        );
+        prefixedDiveChecks = foldl' (
+          acc: containerName:
+          acc
+          // {
+            "oci-dive-check-${containerName}" = diveChecks.${containerName};
+          }
+        ) { } (attrsets.attrNames diveChecks);
       in
       {
         apps = {
@@ -188,6 +220,9 @@ in
           }
           prefixedOCI
         ];
+
+        checks = mkIf cfg.oci.enableCheck prefixedDiveChecks;
+
         devShells.default = mkIf cfg.oci.enableDevShell (
           pkgs.mkShell {
             shellHook = ''

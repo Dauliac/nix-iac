@@ -30,18 +30,21 @@ in
       }:
       {
         devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            cosign # TODO: implement cosign script generation
-            open-policy-agent
-            trivy
-            dive
-          ] ++ [
-            inputs'.nix2container.packages.skopeo-nix2container
-          ];
+          packages =
+            with pkgs;
+            [
+              cosign # TODO: implement cosign script generation
+              open-policy-agent
+              trivy
+              dive
+            ]
+            ++ [
+              inputs'.nix2container.packages.skopeo-nix2container
+            ];
           shellHook = ''
             ${config.packages.oci-updatePulledManifestsLocks}/bin/update-pulled-oci-manifests-locks
-            '';
-          };
+          '';
+        };
       };
   };
 }
