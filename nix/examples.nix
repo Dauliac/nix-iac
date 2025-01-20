@@ -8,6 +8,7 @@
     ../examples/with-dockerhub-from-and-tag-override-01.nix
     ../examples/with-dockerhub-from-and-name-and-tag-override-01.nix
     ../examples/minimalist-with-cve-trivy-ignore-01.nix
+    ../examples/minimalist-with-cve-trivy-ignore-02.nix
     ../examples/with-root-user-and-package-01.nix
   ];
   config = {

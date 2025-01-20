@@ -45,7 +45,11 @@ in
         default = {
           trivy = {
             enabled = true;
-            ignoreRootPath = cfg.oci.ociPath + "cve/trivy/";
+            ignore = {
+              fileEnabled = false;
+              rootPath = cfg.oci.ociPath + "cve/trivy/";
+              extra = [ ];
+            };
           };
         };
         type = types.submodule {
@@ -64,10 +68,26 @@ in
                     description = "";
                     default = true;
                   };
-                  ignoreRootPath = mkOption {
-                    type = types.path;
-                    default = cfg.oci.ociPath + "/trivy/";
-                    description = "";
+                  ignore = mkOption {
+                    type = types.submodule {
+                      options = {
+                        fileEnabled = mkOption {
+                          type = types.bool;
+                          description = "";
+                          default = false;
+                        };
+                        rootPath = mkOption {
+                          type = types.path;
+                          description = "";
+                          default = cfg.oci.ociPath + "/trivy/";
+                        };
+                        extra = mkOption {
+                          type = types.listOf types.str;
+                          description = "Extra CVE to ignore globally";
+                          default = [ ];
+                        };
+                      };
+                    };
                   };
                 };
               };
@@ -135,7 +155,7 @@ in
                         enabled = true;
                         ignore = {
                           enabled = false;
-                          path = cfg.oci.cve.trivy.ignoreRootPath + name + ".ignore";
+                          path = cfg.oci.cve.trivy.ignore.rootPath + name + ".ignore";
                         };
                       };
                     };
@@ -145,7 +165,6 @@ in
                           description = "The package to use for the cve check.";
                           type = types.submodule {
                             options = {
-                              enabled = mkEnableOption "Whether to check for CVEs using trivy.";
                               program = mkOption {
                                 type = types.package;
                                 description = "The package to use for the cve check.";
@@ -153,14 +172,18 @@ in
                               };
                               ignore = mkOption {
                                 description = "Whether to ignore CVEs.";
-                                default = false;
                                 type = types.submodule {
                                   options = {
-                                    enabled = mkEnableOption "Whether to ignore CVEs.";
+                                    fileEnabled = mkEnableOption "Whether to ignore CVEs.";
                                     path = mkOption {
                                       type = types.nullOr types.path;
                                       description = "The path to the ignore file.";
-                                      default = cfg.oci.cve.trivy.ignoreRootPath + name + ".ignore";
+                                      default = cfg.oci.cve.trivy.ignore.rootPath + name + ".ignore";
+                                    };
+                                    extra = mkOption {
+                                      type = types.listOf types.str;
+                                      description = "Extra CVE to ignore.";
+                                      default = [ ];
                                     };
                                   };
                                 };
@@ -384,10 +407,9 @@ in
         CVEApps = lib.genAttrs (lib.attrNames oci) (
           containerName:
           localLib.mkAppCVETrivy {
-            inherit pkgs;
-            inherit (config.oci) skopeo;
-            inherit (config.oci) trivy;
-            config = config.oci.containers.${containerName}.cve;
+            inherit pkgs containerName;
+            config = cfg.oci;
+            perSystemConfig = config.oci;
             oci = oci.${containerName};
           }
         );
@@ -398,7 +420,6 @@ in
             "oci-cve-app-${containerName}" = CVEApps.${containerName};
           }
         ) { } (attrsets.attrNames CVEApps);
-
       in
       {
         apps = lib.mkMerge [

@@ -25,3 +25,8 @@ pre-commit:
     checks:
       tags: build checks
       run: nix flake check --quiet
+    trivy:
+      tags: checks
+      run: |
+        nix run '.#oci-cve-app-minimalistWithTrivyIgnoreAndExtra'
+        nix run '.#oci-cve-app-minimalistWithTrivyIgnore'
