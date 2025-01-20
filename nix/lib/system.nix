@@ -21,21 +21,25 @@ in
       default =
         {
           pkgs,
-          package,
+          tag,
+          user ? null,
+          package ? null,
           dependencies ? [ ],
-          user ? package.meta.mainProgram,
         }:
         let
+          package' = if package == null then [] else [ package ];
           shadowSetup =
-            if user == package.name then
-              cfg.mkNonRootShadowSetup { inherit pkgs user; }
+            if user == "root" then
+              cfg.mkRootShadowSetup { inherit pkgs; }
+            else if user == null then
+              [ ]
             else
-              cfg.mkRootShadowSetup { inherit pkgs; };
+              cfg.mkNonRootShadowSetup { inherit pkgs user; };
         in
         (pkgs.buildEnv {
-          name = package.name;
-          version = package.version;
-          paths = [ package ] ++ shadowSetup ++ dependencies;
+          name = "root";
+          version = tag;
+          paths = package' ++ shadowSetup ++ dependencies;
           pathsToLink = [
             "/bin"
             "/lib"

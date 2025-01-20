@@ -150,19 +150,20 @@ in
           fromImage ? { },
         }:
         let
-          args' = args // {
-            user = if isRoot then "root" else package.meta.mainProgram;
             name =
-              if name != null then
-                if name == "" then throw "Empty name given" else name
-              else if package != null then
-                lib.strings.toLower package.meta.mainProgram
-              else if fromImage != { } then
-                lib.strings.toLower fromImage.imageName
-              else if name == "" then
+              if args.name != null then
+                if args.name == "" then throw "Empty name given" else args.name
+              else if args.package != null then
+                lib.strings.toLower args.package.meta.mainProgram
+              else if args.fromImage != { } then
+                lib.strings.toLower args.fromImage.imageName
+              else if args.name == "" then
                 throw "Empty name given"
               else
                 throw "Error: No valid source for name (name, package.meta.mainProgram, or fromImage.imageName) found.";
+          args' = args // {
+            inherit name;
+            user = if isRoot then "root" else name;
             tag =
               if package != null then
                 package.version
@@ -201,7 +202,7 @@ in
               "";
           copyToRoot = [
             (cfg.mkRoot {
-              inherit (args) pkgs package dependencies;
+              inherit (args) pkgs package dependencies tag;
             })
           ];
           config = {
@@ -224,7 +225,7 @@ in
           copyToRoot = [
             cfg.mkRoot
             {
-              inherit (args) pkgs package;
+              inherit (args) pkgs package tag;
             }
           ];
           layers = [
