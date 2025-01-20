@@ -180,6 +180,17 @@ in
             "oci-${containerName}" = oci.${containerName};
           }
         ) { } (attrsets.attrNames oci);
+        allOCI = pkgs.runCommand "oci-all" {
+            buildInputs = [];
+            inherit (lib) attrsets;
+            inherit (config.oci) containers;
+          } ''
+            mkdir -p $out
+            ${lib.concatMapStringsSep "\n" (name: ''
+              echo "Building container: ${name}"
+              cp ${prefixedOCI.${name}} $out/${name}
+            '') (attrsets.attrNames prefixedOCI)}
+          '';
         updatePulledOCIManifestLocks = localflake.config.lib.mkOCIPulledManifestLockUpdateScript {
           inherit
             pkgs
@@ -217,6 +228,7 @@ in
         packages = lib.mkMerge [
           {
             oci-updatePulledManifestsLocks = updatePulledOCIManifestLocks;
+            oci-all = allOCI;
           }
           prefixedOCI
         ];
