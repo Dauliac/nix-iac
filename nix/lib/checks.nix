@@ -22,16 +22,16 @@ in
           pkgs,
         }:
         pkgs.runCommandLocal "docker-archive"
-        {
+          {
             buildInputs = [
               skopeo
             ];
             meta.description = "Run dive on built image.";
           }
           ''
-              set -e
-              skopeo --tmpdir $TMP --insecure-policy copy nix:${oci} docker-archive:archive.tar
-              mv archive.tar $out
+            set -e
+            skopeo --tmpdir $TMP --insecure-policy copy nix:${oci} docker-archive:archive.tar
+            mv archive.tar $out
           '';
     };
     mkCheckDive = mkOption {

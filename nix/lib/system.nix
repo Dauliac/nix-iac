@@ -27,7 +27,7 @@ in
           dependencies ? [ ],
         }:
         let
-          package' = if package == null then [] else [ package ];
+          package' = if package == null then [ ] else [ package ];
           shadowSetup =
             if user == "root" then
               cfg.mkRootShadowSetup { inherit pkgs; }
