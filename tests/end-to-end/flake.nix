@@ -48,23 +48,20 @@
                 ];
                 isRoot = true;
               };
-              nix = {
-                name = "nix";
-                package = pkgs.bash;
-                installNix = true;
-                dependencies = [
-                  pkgs.coreutils
-                ];
-                isRoot = true;
-              };
+              # nix = {
+              #   name = "nix";
+              #   package = pkgs.bash;
+              #   # installNix = true;
+              #   dependencies = [
+              #     pkgs.coreutils
+              #   ];
+              # };
 
               alpineFromRegistry = {
                 # package = pkgs.bash;
                 fromImage = {
                   imageName = "library/alpine";
                   imageTag = "3.21.2";
-                  os = "linux";
-                  arch = "amd64";
                 };
               };
               alpineWithTagOverride = {
@@ -72,8 +69,6 @@
                 fromImage = {
                   imageName = "library/alpine";
                   imageTag = "3.21.2";
-                  os = "linux";
-                  arch = "amd64";
                 };
               };
               alpineWithNameAndTagOverride = {
@@ -82,8 +77,6 @@
                 fromImage = {
                   imageName = "library/alpine";
                   imageTag = "3.21.1";
-                  os = "linux";
-                  arch = "amd64";
                 };
               };
               alpineWithHelloNameAndTagOverride = {
@@ -93,8 +86,6 @@
                 fromImage = {
                   imageName = "library/alpine";
                   imageTag = "3.21.2";
-                  os = "linux";
-                  arch = "amd64";
                 };
               };
             };
