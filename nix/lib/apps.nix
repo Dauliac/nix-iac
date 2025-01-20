@@ -54,7 +54,8 @@ in
             set -o nounset
             ${args.perSystemConfig.trivy}/bin/trivy image \
               --input ${archive} ${ignoreFileFlag} ${extraIgnoreFileFlag} ${containerExtraIgnoreFileFlag} \
-              --exit-code 1
+              --exit-code 1 \
+              --scanners vuln
           '';
         };
     };
