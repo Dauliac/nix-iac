@@ -13,7 +13,7 @@ in
 {
   options.lib = {
     mkDockerArchive = mkOption {
-      description = mdDoc "";
+      description = mdDoc "A function to transform nix2container build into docker archive";
       type = types.functionTo types.package;
       default =
         {
@@ -35,7 +35,7 @@ in
           '';
     };
     mkCheckDive = mkOption {
-      description = mdDoc "";
+      description = mdDoc "A function to create a check that runs dive on a built image";
       type = types.functionTo types.package;
       default =
         {
