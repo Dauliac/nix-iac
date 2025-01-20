@@ -20,6 +20,7 @@
       ];
       imports = [
         ./nix
+        ./examples
       ];
     });
 }
