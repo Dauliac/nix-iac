@@ -7,6 +7,7 @@ let
   inherit (lib)
     mkOption
     mdDoc
+    mkIf
     types
     ;
   cfg = config.lib;
@@ -128,8 +129,81 @@ in
               inherit fromImageManifestRootPath fromImage;
             };
           };
+          manifest = nix2container.pullImageFromManifest fromImage';
         in
-        nix2container.pullImageFromManifest fromImage';
+        manifest;
+    };
+    mkOCIName = mkOption {
+      type = types.functionTo types.str;
+      description = mdDoc "A function to get name of container";
+      default =
+        {
+          package,
+          fromImage,
+        }:
+        if package != null then
+          lib.strings.toLower package.meta.mainProgram
+        else if fromImage != { } then
+          lib.strings.toLower fromImage.imageName
+        else
+          throw "Error: No valid source for name (name, package.meta.mainProgram, or fromImage.imageName) found.";
+    };
+    mkOCIUser = mkOption {
+      type = types.functionTo types.str;
+      description = mdDoc "A function to get user of container";
+      default =
+        {
+          isRoot,
+          name,
+        }:
+        let
+          user' =
+          if isRoot then
+            "root"
+          else if name != null && name != "" then
+            name
+          else
+            throw "No user given and impossible to infer it from name or isRoot";
+        in
+          user';
+
+    };
+    mkOCITag = mkOption {
+      type = types.functionTo types.str;
+      description = mdDoc "A function to get tag of container";
+      default =
+      { package, fromImage }:
+      let
+        tag' =
+        if package != null && package.version != null then
+          package.version
+        else if fromImage != null && fromImage.imageTag != null then
+          fromImage.imageTag
+        else
+          throw "Empty tag given and impossible to infer it from package or fromImage";
+      in
+        tag';
+
+    };
+    mkOCIEntrypoint = mkOption {
+      type = types.functionTo (types.listOf types.str);
+      description = mdDoc "A function to get entrypoint of container";
+      default =
+        {
+          entrypoint,
+          package,
+        }:
+        let
+          entrypoint' = if entrypoint != [ ] then
+            entrypoint
+            else if package != null then
+              [
+                "/bin/${package.meta.mainProgram}"
+             ]
+            else
+              [ ];
+        in
+        entrypoint';
     };
     mkOCI = mkOption {
       description = mdDoc "A function to build container";
@@ -139,52 +213,17 @@ in
           pkgs,
           nix2container,
           fromImageManifestRootPath,
-          package ? null,
-          isRoot ? false,
-          installNix ? false,
-          user ? "",
-          tag ? "",
-          name ? "",
-          entrypoint ? [ ],
-          dependencies ? [ ],
-          fromImage ? { },
+          package,
+          isRoot,
+          installNix,
+          user,
+          tag,
+          name,
+          entrypoint,
+          dependencies,
+          fromImage,
         }:
-        let
-          name =
-            if args.name != null then
-              if args.name == "" then throw "Empty name given" else args.name
-            else if args.package != null then
-              lib.strings.toLower args.package.meta.mainProgram
-            else if args.fromImage != { } then
-              lib.strings.toLower args.fromImage.imageName
-            else if args.name == "" then
-              throw "Empty name given"
-            else
-              throw "Error: No valid source for name (name, package.meta.mainProgram, or fromImage.imageName) found.";
-          args' = args // {
-            inherit name;
-            user = if isRoot then "root" else name;
-            tag =
-              if package != null then
-                package.version
-              else if fromImage != { } then
-                fromImage.imageTag
-              else if tag == "" then
-                throw "Empty tag given"
-              else
-                "1.0.0";
-            entrypoint =
-              if entrypoint != [ ] then
-                entrypoint
-              else if package != null then
-                [
-                  "/bin/${package.meta.mainProgram}"
-                ]
-              else
-                [ ];
-          };
-        in
-        if args.installNix then cfg.mkNixOCI args' else cfg.mkSimpleOCI args';
+        if args.installNix then cfg.mkNixOCI args else cfg.mkSimpleOCI args;
     };
     mkSimpleOCI = mkOption {
       description = mdDoc "A function to build simple container";
@@ -193,13 +232,14 @@ in
         args:
         (args.nix2container.buildImage {
           inherit (args) tag name;
-          fromImage =
-            if args.fromImage != { } then
-              (cfg.mkOCIPulledManifestLock {
-                inherit (args) nix2container fromImageManifestRootPath fromImage;
-              })
+          # NOTE: here we can't use mkIf because fromImage with empty value require an empty string
+
+          fromImage = if  args.fromImage == null then
+              ""
             else
-              "";
+              cfg.mkOCIPulledManifestLock {
+                inherit (args) nix2container fromImageManifestRootPath fromImage;
+              };
           copyToRoot = [
             (cfg.mkRoot {
               inherit (args)

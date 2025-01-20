@@ -73,6 +73,9 @@ in
                   tag = mkOption {
                     type = types.nullOr types.str;
                     description = "Tag of the container.";
+                    default = localflake.config.lib.mkOCITag {
+                      inherit (config.oci.containers.${name}) package fromImage;
+                    };
                   };
                   package = mkOption {
                     type = types.nullOr types.package;
@@ -81,18 +84,29 @@ in
                   };
                   name = mkOption {
                     type = types.nullOr types.str;
-                    description = "Name of the container.";
-                    default = null;
+                    description = "Name of the container by default values are generated from the package  or given name.";
+                    default = localflake.config.lib.mkOCIName {
+                      inherit (config.oci.containers.${name}) package fromImage;
+                    };
+                  };
+                  user = mkOption {
+                    type = types.nullOr types.str;
+                    description = "The user to run the container as.";
+                    default = localflake.config.lib.mkOCIUser {
+                      inherit (config.oci.containers.${name}) name isRoot;
+                    };
                   };
                   fromImage = mkOption {
                     description = "The image to use as the base image.";
-                    type =
-                      types.submodule ({...}: {
+                    type = types.nullOr (types.submodule (
+                      { ... }:
+                      {
                         options = {
                           imageName = mkOption {
-                            type = types.str;
+                            type = types.nullOr types.str;
                             description = "The name of the base image.";
                             example = "library/alpine";
+                            default = null;
                           };
                           imageTag = mkOption {
                             type = types.str;
@@ -114,16 +128,18 @@ in
                             ];
                             description = "The architecture of the image.";
                             example = "amd64";
-                            default = if system == "x86_64-linux" then
-                              "amd64"
-                            else if system == "aarch64-linux" then
-                              "arm64"
-                            else
-                              throw "Unsupported system: ${system} as default arch, please set the arch option.";
+                            default =
+                              if system == "x86_64-linux" then
+                                "amd64"
+                              else if system == "aarch64-linux" then
+                                "arm64"
+                              else
+                                throw "Unsupported system: ${system} as default arch, please set the arch option.";
                           };
                         };
-                      });
-                    default = { };
+                      }
+                    ));
+                    default = null;
                     example = {
                       imageName = "library/alpine";
                       imageTag = "1.2.3";
@@ -150,6 +166,11 @@ in
                     type = types.bool;
                     description = "Whether to push the container to the OCI registry.";
                     default = false;
+                  };
+                  entrypoint = mkOption {
+                    type = types.listOf types.str;
+                    description = "The entrypoint for the container.";
+                    default = [ ];
                   };
                 };
               }
@@ -191,7 +212,7 @@ in
               else
                 null
             )
-            (attrsets.filterAttrs (_: containerConfig: containerConfig.fromImage != { }) config.oci.containers);
+            (attrsets.filterAttrs (_: containerConfig: containerConfig.fromImage != null) config.oci.containers);
         oci = attrsets.mapAttrs (
           containerName: containerConfig:
           localflake.config.lib.mkOCI {
@@ -205,6 +226,8 @@ in
               isRoot
               installNix
               fromImage
+              entrypoint
+              user
               ;
             inherit nix2container;
           }
