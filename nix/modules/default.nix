@@ -7,6 +7,7 @@ localflake:
   ...
 }:
 let
+  localLib = localflake.config.lib;
   cfg = config;
   inherit (lib)
     mkEnableOption
@@ -35,9 +36,49 @@ in
         description = "Enable the flake checks on built containers.";
         default = true;
       };
-      fromImageManifestRootPath = mkOption {
+      ociPath = mkOption {
         type = types.path;
         default = self + "/.oci/";
+        description = "The root path to store the nix OCI resources.";
+      };
+      cve = mkOption {
+        default = {
+          trivy = {
+            enabled = true;
+            ignoreRootPath = cfg.oci.ociPath + "cve/trivy/";
+          };
+        };
+        type = types.submodule {
+          options = {
+            enabled = mkOption {
+              type = types.bool;
+              description = "";
+              default = true;
+            };
+            trivy = mkOption {
+              description = "Whether to try to check for CVEs using trivy.";
+              type = types.submodule {
+                options = {
+                  enabled = mkOption {
+                    type = types.bool;
+                    description = "";
+                    default = true;
+                  };
+                  ignoreRootPath = mkOption {
+                    type = types.path;
+                    default = cfg.oci.ociPath + "/trivy/";
+                    description = "";
+                  };
+                };
+              };
+            };
+          };
+        };
+        description = "Whether to check for CVEs.";
+      };
+      fromImageManifestRootPath = mkOption {
+        type = types.path;
+        default = cfg.oci.ociPath + "/pulledManifests/";
         description = "The root path to store the pulled OCI image manifest json lockfiles.";
       };
       registry = mkOption {
@@ -59,6 +100,16 @@ in
           description = "The package to use for skopeo.";
           default = localflake.inputs.nix2container.packages.${system}.skopeo-nix2container;
         };
+        options.oci.trivy = mkOption {
+          type = types.package;
+          description = "The package to use for trivy.";
+          default = localflake.inputs.nixpkgs.legacyPackages.${system}.trivy;
+        };
+        options.oci.dive = mkOption {
+          type = types.package;
+          description = "The package to use for dive.";
+          default = localflake.inputs.nixpkgs.legacyPackages.${system}.dive;
+        };
         options.oci.nix2container = mkOption {
           type = types.attrs;
           description = "The nix2container package.";
@@ -73,8 +124,51 @@ in
                   tag = mkOption {
                     type = types.nullOr types.str;
                     description = "Tag of the container.";
-                    default = localflake.config.lib.mkOCITag {
+                    default = localLib.mkOCITag {
                       inherit (config.oci.containers.${name}) package fromImage;
+                    };
+                  };
+                  cve = mkOption {
+                    description = "Whether to check for CVEs.";
+                    default = {
+                      trivy = {
+                        enabled = true;
+                        ignore = {
+                          enabled = false;
+                          path = cfg.oci.cve.trivy.ignoreRootPath + name + ".ignore";
+                        };
+                      };
+                    };
+                    type = types.submodule {
+                      options = {
+                        trivy = mkOption {
+                          description = "The package to use for the cve check.";
+                          type = types.submodule {
+                            options = {
+                              enabled = mkEnableOption "Whether to check for CVEs using trivy.";
+                              program = mkOption {
+                                type = types.package;
+                                description = "The package to use for the cve check.";
+                                default = localflake.inputs.nixpkgs.legacyPackages.${system}.trivy;
+                              };
+                              ignore = mkOption {
+                                description = "Whether to ignore CVEs.";
+                                default = false;
+                                type = types.submodule {
+                                  options = {
+                                    enabled = mkEnableOption "Whether to ignore CVEs.";
+                                    path = mkOption {
+                                      type = types.nullOr types.path;
+                                      description = "The path to the ignore file.";
+                                      default = cfg.oci.cve.trivy.ignoreRootPath + name + ".ignore";
+                                    };
+                                  };
+                                };
+                              };
+                            };
+                          };
+                        };
+                      };
                     };
                   };
                   package = mkOption {
@@ -85,14 +179,14 @@ in
                   name = mkOption {
                     type = types.nullOr types.str;
                     description = "Name of the container by default values are generated from the package  or given name.";
-                    default = localflake.config.lib.mkOCIName {
+                    default = localLib.mkOCIName {
                       inherit (config.oci.containers.${name}) package fromImage;
                     };
                   };
                   user = mkOption {
                     type = types.nullOr types.str;
                     description = "The user to run the container as.";
-                    default = localflake.config.lib.mkOCIUser {
+                    default = localLib.mkOCIUser {
                       inherit (config.oci.containers.${name}) name isRoot;
                     };
                   };
@@ -219,7 +313,7 @@ in
             );
         oci = attrsets.mapAttrs (
           containerName: containerConfig:
-          localflake.config.lib.mkOCI {
+          localLib.mkOCI {
             inherit (cfg.oci) fromImageManifestRootPath;
             inherit pkgs;
             inherit (containerConfig)
@@ -261,7 +355,7 @@ in
                 ''
               ) (attrsets.attrNames prefixedOCI)}
             '';
-        updatePulledOCIManifestLocks = localflake.config.lib.mkOCIPulledManifestLockUpdateScript {
+        updatePulledOCIManifestLocks = localLib.mkOCIPulledManifestLockUpdateScript {
           inherit
             pkgs
             self
@@ -273,10 +367,10 @@ in
         };
         diveChecks = lib.genAttrs (lib.attrNames oci) (
           containerName:
-          localflake.config.lib.mkCheckDive {
+          localLib.mkCheckDive {
             inherit pkgs;
             inherit (config.oci) skopeo;
-            dive = pkgs.dive;
+            inherit (config.oci) dive;
             oci = oci.${containerName};
           }
         );
@@ -287,14 +381,36 @@ in
             "oci-dive-check-${containerName}" = diveChecks.${containerName};
           }
         ) { } (attrsets.attrNames diveChecks);
+        CVEApps = lib.genAttrs (lib.attrNames oci) (
+          containerName:
+          localLib.mkAppCVETrivy {
+            inherit pkgs;
+            inherit (config.oci) skopeo;
+            inherit (config.oci) trivy;
+            config = config.oci.containers.${containerName}.cve;
+            oci = oci.${containerName};
+          }
+        );
+        prefixedCVEApps = foldl' (
+          acc: containerName:
+          acc
+          // {
+            "oci-cve-app-${containerName}" = CVEApps.${containerName};
+          }
+        ) { } (attrsets.attrNames CVEApps);
+
       in
       {
-        apps = {
-          oci-updatePulledManifestsLocks = {
-            type = "app";
-            program = updatePulledOCIManifestLocks;
-          };
-        };
+        apps = lib.mkMerge [
+          {
+            oci-updatePulledManifestsLocks = {
+              type = "app";
+              program = updatePulledOCIManifestLocks;
+            };
+          }
+          prefixedCVEApps
+        ];
+
         packages = lib.mkMerge [
           {
             oci-updatePulledManifestsLocks = updatePulledOCIManifestLocks;

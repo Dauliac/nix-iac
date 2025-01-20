@@ -6,7 +6,6 @@
     nix2container.url = "github:nlewo/nix2container";
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
-
   outputs =
     inputs@{
       flake-parts,
@@ -20,7 +19,6 @@
       ];
       imports = [
         ./nix
-        ./examples
       ];
     });
 }

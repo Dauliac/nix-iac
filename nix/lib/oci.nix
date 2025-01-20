@@ -316,5 +316,27 @@ in
           };
         };
     };
+    mkDockerArchive = mkOption {
+      description = mdDoc "A function to transform nix2container build into docker archive";
+      type = types.functionTo types.package;
+      default =
+        {
+          oci,
+          skopeo,
+          pkgs,
+        }:
+        pkgs.runCommandLocal "docker-archive"
+          {
+            buildInputs = [
+              skopeo
+            ];
+            meta.description = "Run dive on built image.";
+          }
+          ''
+            set -e
+            skopeo --tmpdir $TMP --insecure-policy copy nix:${oci} docker-archive:archive.tar
+            mv archive.tar $out
+          '';
+    };
   };
 }

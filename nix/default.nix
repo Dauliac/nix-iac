@@ -14,6 +14,7 @@ in
   imports = [
     ./lib
     ./treefmt.nix
+    ./examples.nix
     inputs.flake-parts.flakeModules.modules
     flakeModules
   ];
@@ -36,6 +37,7 @@ in
               cosign # TODO: implement cosign script generation
               open-policy-agent
               trivy
+              vulnix
               dive
               lefthook
               convco
