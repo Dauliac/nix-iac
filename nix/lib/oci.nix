@@ -7,7 +7,6 @@ let
   inherit (lib)
     mkOption
     mdDoc
-    mkIf
     types
     ;
   cfg = config.lib;
