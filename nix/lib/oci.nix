@@ -158,32 +158,33 @@ in
         }:
         let
           user' =
-          if isRoot then
-            "root"
-          else if name != null && name != "" then
-            name
-          else
-            throw "No user given and impossible to infer it from name or isRoot";
+            if isRoot then
+              "root"
+            else if name != null && name != "" then
+              name
+            else
+              throw "No user given and impossible to infer it from name or isRoot";
         in
-          user';
-
+        user';
     };
     mkOCITag = mkOption {
       type = types.functionTo types.str;
       description = mdDoc "A function to get tag of container";
       default =
-      { package, fromImage }:
-      let
-        tag' =
-        if package != null && package.version != null then
-          package.version
-        else if fromImage != null && fromImage.imageTag != null then
-          fromImage.imageTag
-        else
-          throw "Empty tag given and impossible to infer it from package or fromImage";
-      in
+        {
+          package,
+          fromImage,
+        }:
+        let
+          tag' =
+            if package != null && package.version != null then
+              package.version
+            else if fromImage != null && fromImage.imageTag != null then
+              fromImage.imageTag
+            else
+              throw "Empty tag given and impossible to infer it from package or fromImage";
+        in
         tag';
-
     };
     mkOCIEntrypoint = mkOption {
       type = types.functionTo (types.listOf types.str);
@@ -194,12 +195,13 @@ in
           package,
         }:
         let
-          entrypoint' = if entrypoint != [ ] then
-            entrypoint
+          entrypoint' =
+            if entrypoint != [ ] then
+              entrypoint
             else if package != null then
               [
                 "/bin/${package.meta.mainProgram}"
-             ]
+              ]
             else
               [ ];
         in
@@ -234,7 +236,8 @@ in
           inherit (args) tag name;
           # NOTE: here we can't use mkIf because fromImage with empty value require an empty string
 
-          fromImage = if  args.fromImage == null then
+          fromImage =
+            if args.fromImage == null then
               ""
             else
               cfg.mkOCIPulledManifestLock {

@@ -98,47 +98,49 @@ in
                   };
                   fromImage = mkOption {
                     description = "The image to use as the base image.";
-                    type = types.nullOr (types.submodule (
-                      { ... }:
-                      {
-                        options = {
-                          imageName = mkOption {
-                            type = types.nullOr types.str;
-                            description = "The name of the base image.";
-                            example = "library/alpine";
-                            default = null;
-                          };
-                          imageTag = mkOption {
-                            type = types.str;
-                            description = "The tag/version of the image.";
-                            example = "3.21.2";
-                          };
-                          os = mkOption {
-                            type = types.enum [
-                              "linux"
-                            ];
-                            description = "The operating system for the image.";
-                            example = "linux";
-                            default = "linux";
-                          };
-                          arch = mkOption {
-                            type = types.enum [
-                              "amd64"
-                              "arm64"
-                            ];
-                            description = "The architecture of the image.";
-                            example = "amd64";
-                            default =
-                              if system == "x86_64-linux" then
+                    type = types.nullOr (
+                      types.submodule (
+                        { ... }:
+                        {
+                          options = {
+                            imageName = mkOption {
+                              type = types.nullOr types.str;
+                              description = "The name of the base image.";
+                              example = "library/alpine";
+                              default = null;
+                            };
+                            imageTag = mkOption {
+                              type = types.str;
+                              description = "The tag/version of the image.";
+                              example = "3.21.2";
+                            };
+                            os = mkOption {
+                              type = types.enum [
+                                "linux"
+                              ];
+                              description = "The operating system for the image.";
+                              example = "linux";
+                              default = "linux";
+                            };
+                            arch = mkOption {
+                              type = types.enum [
                                 "amd64"
-                              else if system == "aarch64-linux" then
                                 "arm64"
-                              else
-                                throw "Unsupported system: ${system} as default arch, please set the arch option.";
+                              ];
+                              description = "The architecture of the image.";
+                              example = "amd64";
+                              default =
+                                if system == "x86_64-linux" then
+                                  "amd64"
+                                else if system == "aarch64-linux" then
+                                  "arm64"
+                                else
+                                  throw "Unsupported system: ${system} as default arch, please set the arch option.";
+                            };
                           };
-                        };
-                      }
-                    ));
+                        }
+                      )
+                    );
                     default = null;
                     example = {
                       imageName = "library/alpine";
@@ -212,7 +214,9 @@ in
               else
                 null
             )
-            (attrsets.filterAttrs (_: containerConfig: containerConfig.fromImage != null) config.oci.containers);
+            (
+              attrsets.filterAttrs (_: containerConfig: containerConfig.fromImage != null) config.oci.containers
+            );
         oci = attrsets.mapAttrs (
           containerName: containerConfig:
           localflake.config.lib.mkOCI {
