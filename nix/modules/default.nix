@@ -274,10 +274,10 @@ in
         diveChecks = lib.genAttrs (lib.attrNames oci) (
           containerName:
           localflake.config.lib.mkCheckDive {
-            oci = prefixedOCI.${containerName};
             inherit pkgs;
-            dive = pkgs.dive;
             inherit (config.oci) skopeo;
+            dive = pkgs.dive;
+            oci = oci.${containerName};
           }
         );
         prefixedDiveChecks = foldl' (
