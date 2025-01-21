@@ -46,7 +46,6 @@ in
               inputs'.nix2container.packages.skopeo-nix2container
             ];
           shellHook = ''
-            ${config.packages.oci-updatePulledManifestsLocks}/bin/update-pulled-oci-manifests-locks
             ${pkgs.lefthook}/bin/lefthook install --force
           '';
         };
