@@ -21,7 +21,7 @@ in
           pkgs,
           oci,
           perSystemConfig,
-          containerId,
+          containerName,
           config,
         }:
         let
@@ -29,7 +29,7 @@ in
           configFlags = lib.concatStringsSep " " (
             lib.map (
               config: "--config=${config}"
-            ) config.containers.${containerId}.containerStructureTest.configs
+            ) config.containers.${containerName}.containerStructureTest.configs
           );
 
           # TODO: add option to configure tests output format
@@ -40,7 +40,7 @@ in
               --runtime podman \
               --output text \
               --output junit \
-              --test-report cst-${containerId}.junit.xml \
+              --test-report cst-${containerName}.junit.xml \
               "${configFlags}"
           '';
           envRunScript = pkgs.writeScriptBin "run" ''
@@ -66,6 +66,14 @@ in
           export PATH="${pkgs.podman}/bin:${pkgs.bash}/bin"
           ${fhsEnv}/bin/container-structure-test
         '';
+    };
+    mkAppContainerStructureTest = mkOption {
+      description = mdDoc "A function to create a check that runs container-structure-test on a built image using podman.";
+      type = types.functionTo types.attrs;
+      default = args: {
+        type = "app";
+        program = cfg.mkScriptContainerStructureTest args;
+      };
     };
   };
 }
