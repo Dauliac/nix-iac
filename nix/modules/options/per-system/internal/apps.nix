@@ -40,12 +40,12 @@ in
             internal = true;
             readOnly = true;
               default = attrsets.mapAttrs (
-              containerName: oci:
+              ContainerId: oci:
               localLib.mkAppCVETrivy {
-                inherit pkgs containerName;
+                inherit pkgs ContainerId;
                 config = cfg.oci;
                 perSystemConfig = config.oci;
-                oci = oci.${containerName};
+                oci = oci.${ContainerId};
               }
             ) config.oci.internal.diveOCIs;
           };
@@ -72,12 +72,12 @@ in
             internal = true;
             readOnly = true;
             default = attrsets.mapAttrs (
-              containerName: oci:
+              ContainerId: oci:
               localLib.mkAppCVEGrype {
-                inherit pkgs containerName;
+                inherit pkgs ContainerId;
                 config = cfg.oci;
                 perSystemConfig = config.oci;
-                oci = oci.${containerName};
+                oci = oci.${ContainerId};
               }
             ) config.oci.internal.CVEGrypeOCIs;
           };
@@ -104,12 +104,12 @@ in
             internal = true;
             readOnly = true;
             default = attrsets.mapAttrs (
-              containerName: oci:
+              ContainerId: oci:
               localLib.mkAppSBOMSyft {
-                inherit pkgs containerName;
+                inherit pkgs ContainerId;
                 config = cfg.oci;
                 perSystemConfig = config.oci;
-                oci = oci.${containerName};
+                oci = oci.${ContainerId};
               }
             ) config.oci.internal.SBOMSyftOCIs;
           };
@@ -136,12 +136,12 @@ in
             internal = true;
             readOnly = true;
             default = attrsets.mapAttrs (
-              containerName: oci:
+              ContainerId: oci:
               localLib.mkAppCredentialsLeakTrivy {
-                inherit pkgs containerName;
+                inherit pkgs ContainerId;
                 config = cfg.oci;
                 perSystemConfig = config.oci;
-                oci = oci.${containerName};
+                oci = oci.${ContainerId};
               }
             ) config.oci.internal.credentialsLeakTrivyOCIs;
           };
@@ -168,12 +168,12 @@ in
             internal = true;
             readOnly = true;
             default = attrsets.mapAttrs (
-              containerName: oci:
+              ContainerId: oci:
               localLib.mkAppContainerStructureTest {
-                inherit pkgs containerName;
+                inherit pkgs ContainerId;
                 config = cfg.oci;
                 perSystemConfig = config.oci;
-                oci = oci.${containerName};
+                oci = oci.${ContainerId};
               }
             ) config.oci.internal.containerStructureTestOCIs;
           };

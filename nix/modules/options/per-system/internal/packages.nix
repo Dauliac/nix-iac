@@ -33,7 +33,7 @@ in
             default =
               attrsets.mapAttrs
                 (
-                  containerName: containerConfig:
+                  ContainerId: containerConfig:
                   if containerConfig.fromImage != { } then
                     config.oci.packages.pullImageFromManifest containerConfig.fromImage
                     // {
@@ -53,10 +53,10 @@ in
           OCIs = mkOption {
             type = types.attrsOf types.package;
             default = attrsets.mapAttrs (
-              containerName: containerConfig:
+              ContainerId: containerConfig:
               localLib.mkOCI {
                 inherit pkgs;
-                inherit containerName;
+                inherit ContainerId;
                 config = cfg.oci;
                 perSystemConfig = config.oci;
               }

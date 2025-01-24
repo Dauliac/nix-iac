@@ -21,7 +21,7 @@ in
           pkgs,
           oci,
           perSystemConfig,
-          containerName,
+          ContainerId,
           config,
         }:
         let
@@ -29,7 +29,7 @@ in
           configFlags = lib.concatStringsSep " " (
             lib.map (
               config: "--config=${config}"
-            ) config.containers.${containerName}.containerStructureTest.configs
+            ) config.containers.${ContainerId}.containerStructureTest.configs
           );
 
           # TODO: add option to configure tests output format
@@ -40,7 +40,7 @@ in
               --runtime podman \
               --output text \
               --output junit \
-              --test-report cst-${containerName}.junit.xml \
+              --test-report cst-${ContainerId}.junit.xml \
               "${configFlags}"
           '';
           envRunScript = pkgs.writeScriptBin "run" ''

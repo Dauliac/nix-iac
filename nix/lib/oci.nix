@@ -32,9 +32,9 @@ in
           };
           update = lib.concatStringsSep "\n" (
             lib.mapAttrsToList (
-              containerName: container:
+              ContainerId: container:
               let
-                inherit (containers.${containerName}) fromImage;
+                inherit (containers.${ContainerId}) fromImage;
                 manifestPath = cfg.mkOCIPulledManifestLockRelativePath {
                   inherit self fromImageManifestRootPath fromImage;
                 };
@@ -50,11 +50,11 @@ in
                   currentContent=$(cat "${manifestPath}")
                   newContent=$(echo "$manifest")
                   if [ "$currentContent" != "$newContent" ]; then
-                    printf "Updating lock manifest for ${containerName}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
+                    printf "Updating lock manifest for ${ContainerId}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
                     echo "$manifest" > "${manifestPath}"
                   fi
                 else
-                  printf "Generating lock manifest for ${containerName}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
+                  printf "Generating lock manifest for ${ContainerId}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
                   echo "$manifest" > "${manifestPath}"
                 fi
               ''
@@ -77,11 +77,11 @@ in
         args@{
           config,
           perSystemConfig,
-          containerName,
+          ContainerId,
           ...
         }:
         let
-          oci = args.perSystemConfig.containers.${args.containerName};
+          oci = args.perSystemConfig.containers.${args.ContainerId};
           name = lib.strings.replaceStrings [ "/" ] [ "-" ] oci.fromImage.imageName;
         in
         config.fromImageManifestRootPath + name + "-" + oci.fromImage.imageTag + "-manifest-lock.json";
@@ -120,11 +120,11 @@ in
         args@{
           config,
           perSystemConfig,
-          containerName,
+          ContainerId,
           ...
         }:
         let
-          oci = perSystemConfig.containers.${containerName};
+          oci = perSystemConfig.containers.${ContainerId};
           fromImage' = oci.fromImage // {
             imageManifest = cfg.mkOCIPulledManifestLockPath args;
           };
@@ -209,10 +209,10 @@ in
           pkgs,
           config,
           perSystemConfig,
-          containerName,
+          ContainerId,
         }:
         let
-          oci = args.perSystemConfig.containers.${args.containerName};
+          oci = args.perSystemConfig.containers.${args.ContainerId};
         in
         if oci.installNix then cfg.mkNixOCI args else cfg.mkSimpleOCI args;
     };
@@ -222,7 +222,7 @@ in
       default =
         args:
         let
-          oci = args.perSystemConfig.containers.${args.containerName};
+          oci = args.perSystemConfig.containers.${args.ContainerId};
         in
         (args.perSystemConfig.packages.nix2container.buildImage {
           inherit (oci) tag name;
@@ -255,7 +255,7 @@ in
       default =
         args:
         let
-          oci = args.perSystemConfig.containers.${args.containerName};
+          oci = args.perSystemConfig.containers.${args.ContainerId};
         in
         args.perSystemConfig.packages.nix2container.buildImage {
           inherit (oci) name tag;
@@ -282,7 +282,7 @@ in
       default =
         args:
         let
-          oci = args.config.oci.containers.${args.containerName};
+          oci = args.config.oci.containers.${args.ContainerId};
         in
         args.perSystemConfig.packages.nix2container.buildLayer {
           copyToRoot = [
