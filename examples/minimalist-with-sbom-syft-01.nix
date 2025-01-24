@@ -9,13 +9,14 @@
       }:
       {
         config.oci.containers = {
-          minimalistWithTrivyIgnore = {
+          minimalistWithSyft = {
             package = pkgs.kubectl;
-            cve.trivy = {
+            sbom.syft = {
               enabled = true;
-              ignore = {
-                fileEnabled = true;
-              };
+              # config = {
+              #   enabled = true;
+              #   path = ./minimalist-with-sbom-syft-01.yaml;
+              # };
             };
           };
         };

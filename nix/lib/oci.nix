@@ -20,7 +20,7 @@ in
         {
           pkgs,
           self,
-          nix2container,
+          perSystemConfig,
           containers,
           pulledOCI,
           fromImageManifestRootPath,
@@ -36,14 +36,11 @@ in
               let
                 inherit (containers.${containerName}) fromImage;
                 manifestPath = cfg.mkOCIPulledManifestLockRelativePath {
-                  inherit fromImageManifestRootPath;
-                  inherit fromImage;
-                  inherit self;
+                  inherit self fromImageManifestRootPath fromImage;
                 };
                 manifest = cfg.mkOCIPulledManifestLock {
-                  inherit nix2container;
-                  inherit fromImageManifestRootPath;
-                  inherit fromImage;
+                  inherit (perSystemConfig.packages) nix2containers;
+                  inherit fromImageManifestRootPath fromImage;
                 };
               in
               ''
@@ -77,14 +74,17 @@ in
       description = mdDoc "A function to build OCI manifest to pull";
       type = types.functionTo types.path;
       default =
-        {
-          fromImageManifestRootPath,
-          fromImage,
+        args@{
+          config,
+          perSystemConfig,
+          containerName,
+          ...
         }:
         let
-          name = lib.strings.replaceStrings [ "/" ] [ "-" ] fromImage.imageName;
+          oci = args.perSystemConfig.containers.${args.containerName};
+          name = lib.strings.replaceStrings [ "/" ] [ "-" ] oci.fromImage.imageName;
         in
-        fromImageManifestRootPath + name + "-" + fromImage.imageTag + "-manifest-lock.json";
+        config.fromImageManifestRootPath + name + "-" + oci.fromImage.imageTag + "-manifest-lock.json";
     };
     mkOCIPulledManifestLockRelativeRootPath = mkOption {
       description = mdDoc "A function to get relative path lock manifest of to pull OCI";
@@ -117,18 +117,18 @@ in
       description = mdDoc "A function to build OCI manifest to pull";
       type = types.functionTo types.package;
       default =
-        {
-          nix2container,
-          fromImageManifestRootPath,
-          fromImage,
+        args@{
+          config,
+          perSystemConfig,
+          containerName,
+          ...
         }:
         let
-          fromImage' = fromImage // {
-            imageManifest = cfg.mkOCIPulledManifestLockPath {
-              inherit fromImageManifestRootPath fromImage;
-            };
+          oci = perSystemConfig.containers.${containerName};
+          fromImage' = oci.fromImage // {
+            imageManifest = cfg.mkOCIPulledManifestLockPath args;
           };
-          manifest = nix2container.pullImageFromManifest fromImage';
+          manifest = perSystemConfig.packages.nix2container.pullImageFromManifest fromImage';
         in
         manifest;
     };
@@ -190,21 +190,18 @@ in
       description = mdDoc "A function to get entrypoint of container";
       default =
         {
-          entrypoint,
           package,
         }:
         let
-          entrypoint' =
-            if entrypoint != [ ] then
-              entrypoint
-            else if package != null then
+          entrypoint =
+            if package != null then
               [
                 "/bin/${package.meta.mainProgram}"
               ]
             else
               [ ];
         in
-        entrypoint';
+        entrypoint;
     };
     mkOCI = mkOption {
       description = mdDoc "A function to build container";
@@ -212,40 +209,36 @@ in
       default =
         args@{
           pkgs,
-          nix2container,
-          fromImageManifestRootPath,
-          package,
-          isRoot,
-          installNix,
-          user,
-          tag,
-          name,
-          entrypoint,
-          dependencies,
-          fromImage,
+          config,
+          perSystemConfig,
+          containerName,
         }:
-        if args.installNix then cfg.mkNixOCI args else cfg.mkSimpleOCI args;
+        let
+          oci = args.perSystemConfig.containers.${args.containerName};
+        in
+        if oci.installNix then cfg.mkNixOCI args else cfg.mkSimpleOCI args;
     };
     mkSimpleOCI = mkOption {
       description = mdDoc "A function to build simple container";
       type = types.functionTo types.package;
       default =
         args:
-        (args.nix2container.buildImage {
-          inherit (args) tag name;
+        let
+          oci = args.perSystemConfig.containers.${args.containerName};
+        in
+        (args.perSystemConfig.packages.nix2container.buildImage {
+          inherit (oci) tag name;
           # NOTE: here we can't use mkIf because fromImage with empty value require an empty string
 
           fromImage =
-            if args.fromImage == null then
+            if oci.fromImage == null then
               ""
             else
-              cfg.mkOCIPulledManifestLock {
-                inherit (args) nix2container fromImageManifestRootPath fromImage;
-              };
+              cfg.mkOCIPulledManifestLock args;
           copyToRoot = [
             (cfg.mkRoot {
-              inherit (args)
-                pkgs
+              inherit (args) pkgs;
+              inherit (oci)
                 package
                 dependencies
                 tag
@@ -253,10 +246,11 @@ in
             })
           ];
           config = {
-            inherit (args) entrypoint;
+            inherit (oci) entrypoint;
+            User = oci.user;
             Env = [
               "PATH=/bin"
-              "USER=${args.user}"
+              "USER=${oci.user}"
             ];
           };
         });
@@ -266,22 +260,25 @@ in
       type = types.functionTo types.package;
       default =
         args:
-        args.nix2container.buildImage {
-          inherit (args) name tag;
+        let
+          oci = args.perSystemConfig.containers.${args.containerName};
+        in
+        args.perSystemConfig.packages.nix2container.buildImage {
+          inherit (oci) name tag;
           initializeNixDatabase = true;
           copyToRoot = [
             cfg.mkRoot
             {
-              inherit (args) pkgs package tag;
+              inherit (oci) pkgs package tag;
             }
           ];
           layers = [
             (cfg.mkNixOCILayer {
-              inherit (args) user pkgs nix2container;
+              inherit (oci) user pkgs nix2container;
             })
           ];
           config = {
-            inherit (args) entrypoint;
+            inherit (oci) entrypoint;
           };
         };
     };
@@ -290,7 +287,10 @@ in
       type = types.package;
       default =
         args:
-        args.nix2container.buildLayer {
+        let
+          oci = args.config.oci.containers.${args.containerName};
+        in
+        args.perSystemConfig.packages.nix2container.buildLayer {
           copyToRoot = [
             (args.pkgs.buildEnv {
               name = "root";
@@ -310,7 +310,7 @@ in
           config = {
             Env = [
               "NIX_PAGER=cat"
-              "USER=${args.user}"
+              "USER=${oci.user}"
               "HOME=/"
             ];
           };
@@ -337,6 +337,92 @@ in
             skopeo --tmpdir $TMP --insecure-policy copy nix:${oci} docker-archive:archive.tar
             mv archive.tar $out
           '';
+    };
+    mkPodmanOCI = mkOption {
+      description = mdDoc "Function to build a container image with Podman and a non-root daemon.";
+      # type = types.functionTo types.package;
+      default =
+        {
+          nix2container,
+          pkgs,
+          package,
+          dependencies ? [ ],
+        }:
+        let
+          podmanConfig = pkgs.writeTextDir "etc/containers/containers.conf" ''
+            [containers]
+            log_level = "error"
+            rootless = true
+          '';
+          entrypointScript = ./podman-oci-entrypoint.sh;
+          tag = config.lib.mkOCITag {
+            inherit package;
+            fromImage = null;
+          };
+          user = "podman";
+        in
+        nix2container.buildImage {
+          name = "podman";
+          inherit tag;
+          copyToRoot = [
+            (cfg.mkRoot {
+              inherit pkgs package;
+              inherit tag user;
+              dependencies = [
+                pkgs.podman
+                podmanConfig
+              ] ++ dependencies;
+            })
+            entrypointScript
+          ];
+          config = {
+            # TODO: add user var and config here
+            User = user;
+            Env = [
+              "USER=${user}"
+            ];
+            entrypoint = [
+              "/podman-oci-entrypoint.sh"
+              "$@"
+            ];
+          };
+        };
+    };
+    mkPodmanOCIRunScript = mkOption {
+      description = mdDoc "Function to build a script into a podman container image";
+      type = types.functionTo types.package;
+      default =
+        args@{
+          nix2container,
+          pkgs,
+          package,
+          dependencies ? [ ],
+        }:
+        let
+          podman = config.lib.mkPodmanOCI {
+            inherit (args)
+              nix2container
+              pkgs
+              package
+              dependencies
+              ;
+          };
+        in
+        pkgs.writeShellScriptBin "run-in-podman" ''
+          set -o errexit
+          set -o pipefail
+          set -o nounset
+
+          set -x
+          mkdir -p ./tmp
+          export HOME=./tmp
+
+          ${pkgs.strace}/bin/strace ${pkgs.podman}/bin/podman run --rm --detach ${podman.imageName}:${podman.imageTag}
+
+          id=''$(${pkgs.podman}/bin/podman run --rm --detach ${podman.imageName}:${podman.imageTag})
+          sleep 2
+          ${pkgs.podman}/bin/podman exec $id "$@"
+        '';
     };
   };
 }

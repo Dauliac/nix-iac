@@ -9,6 +9,7 @@ let
     mdDoc
     types
     ;
+  cfg = config.lib;
 in
 {
   options.lib = {
@@ -19,18 +20,20 @@ in
         {
           oci,
           pkgs,
-          dive,
+          perSystemConfig,
           skopeo,
         }:
         let
-          archive = config.lib.mkDockerArchive { inherit oci pkgs skopeo; };
+          archive = config.lib.mkDockerArchive {
+            inherit oci pkgs;
+            inherit (perSystemConfig.packages) skopeo;
+          };
         in
         pkgs.runCommandLocal "dive-check"
           {
             buildInputs = [
-              dive
+              perSystemConfig.pakcages.dive
             ];
-            meta.description = "Run dive on built image.";
           }
           ''
             set -e

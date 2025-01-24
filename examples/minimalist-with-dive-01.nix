@@ -9,14 +9,9 @@
       }:
       {
         config.oci.containers = {
-          minimalistWithTrivyIgnore = {
+          minimalistWithDive = {
             package = pkgs.kubectl;
-            cve.trivy = {
-              enabled = true;
-              ignore = {
-                fileEnabled = true;
-              };
-            };
+            dive.enabled = true;
           };
         };
       };

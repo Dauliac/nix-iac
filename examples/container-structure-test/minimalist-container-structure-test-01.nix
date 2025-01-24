@@ -1,6 +1,7 @@
 { ... }:
 {
   config = {
+    # config.oci.containerStructureTest.enabled = true;
     perSystem =
       {
         pkgs,
@@ -9,13 +10,13 @@
       }:
       {
         config.oci.containers = {
-          minimalistWithTrivyIgnore = {
+          minimalistWithContainerStructureTest = {
             package = pkgs.kubectl;
-            cve.trivy = {
+            containerStructureTest = {
               enabled = true;
-              ignore = {
-                fileEnabled = true;
-              };
+              configs = [
+                ./test.yaml
+              ];
             };
           };
         };

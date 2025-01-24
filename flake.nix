@@ -14,6 +14,7 @@
       ...
     }:
     flake-parts.lib.mkFlake { inherit inputs; } (_: {
+      debug = true;
       systems = [
         "x86_64-linux"
       ];

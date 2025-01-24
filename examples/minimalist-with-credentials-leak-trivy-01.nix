@@ -9,13 +9,10 @@
       }:
       {
         config.oci.containers = {
-          minimalistWithTrivyIgnore = {
+          minimalistWithTrivy = {
             package = pkgs.kubectl;
-            cve.trivy = {
+            credentialsLeak.trivy = {
               enabled = true;
-              ignore = {
-                fileEnabled = true;
-              };
             };
           };
         };

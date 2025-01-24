@@ -12,13 +12,14 @@
     {
       treefmt = {
         programs = {
-          typos.enable = true;
-          shellcheck.enable = true;
-          nixfmt.enable = true;
           alejandra.enable = true;
-          yamlfmt.enable = true;
           jsonfmt.enable = true;
+          nixfmt.enable = true;
+          shellcheck.enable = true;
+          shfmt.enable = true;
           toml-sort.enable = true;
+          typos.enable = true;
+          yamlfmt.enable = true;
         };
       };
     };

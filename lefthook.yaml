@@ -17,6 +17,7 @@ commit-msg:
       tags: check commit typos
       run: cat "{1}" | head -n 1 | typos -
 pre-commit:
+  parallel: true
   commands:
     formatter:
       tags: formatter
@@ -28,8 +29,11 @@ pre-commit:
     checks:
       tags: build checks
       run: nix flake check --quiet
+    update-pulled-manifests-locks:
+      run: |
+        nix run '.#oci-updatePulledManifestsLocks'
     trivy:
       tags: checks
       run: |
-        nix run '.#oci-cve-app-minimalistWithTrivyIgnoreAndExtra'
-        nix run '.#oci-cve-app-minimalistWithTrivyIgnore'
+        nix run '.#oci-cve-trivy-minimalistWithTrivyIgnoreAndExtra'
+        nix run '.#oci-cve-trivy-minimalistWithTrivyIgnore'

@@ -13,83 +13,19 @@
       ...
     }:
     flake-parts.lib.mkFlake { inherit inputs; } (_: {
-      imports = [
-        inputs.nix-oci.modules.flake.default
-      ];
+      imports =
+        [
+          inputs.nix-oci.modules.flake.default
+        ]
+        ++ inputs.nixpkgs.lib.fileset.toList (
+          inputs.nixpkgs.lib.fileset.fileFilter (file: file.hasExt "nix") ../../examples
+        );
       config = {
         oci.enabled = true;
         oci.enableDevShell = true;
         systems = [
           "x86_64-linux"
         ];
-        perSystem =
-          {
-            pkgs,
-            config,
-            ...
-          }:
-          {
-            config.oci.containers = {
-              hello = {
-                package = pkgs.hello;
-              };
-              kubectl = {
-                package = pkgs.kubectl;
-                dependencies = [
-                  pkgs.bash
-                  pkgs.kubectl-cnpg
-                ];
-              };
-              root = {
-                name = "root";
-                package = pkgs.bash;
-                dependencies = [
-                  pkgs.coreutils
-                ];
-                isRoot = true;
-              };
-              # nix = {
-              #   name = "nix";
-              #   package = pkgs.bash;
-              #   # installNix = true;
-              #   dependencies = [
-              #     pkgs.coreutils
-              #   ];
-              # };
-
-              alpineFromRegistry = {
-                # package = pkgs.bash;
-                fromImage = {
-                  imageName = "library/alpine";
-                  imageTag = "3.21.2";
-                };
-              };
-              alpineWithTagOverride = {
-                tag = "0.1.0";
-                fromImage = {
-                  imageName = "library/alpine";
-                  imageTag = "3.21.2";
-                };
-              };
-              alpineWithNameAndTagOverride = {
-                name = "alpine-test";
-                tag = "0.1.0";
-                fromImage = {
-                  imageName = "library/alpine";
-                  imageTag = "3.21.1";
-                };
-              };
-              alpineWithHelloNameAndTagOverride = {
-                name = "alpine-test";
-                tag = "0.1.0";
-                package = pkgs.hello;
-                fromImage = {
-                  imageName = "library/alpine";
-                  imageTag = "3.21.2";
-                };
-              };
-            };
-          };
       };
     });
 }
