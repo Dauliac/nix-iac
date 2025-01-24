@@ -11,7 +11,7 @@ let
     ;
 in
 {
-  config = mkIf (config.oci != null && config.oci.enabled) {
+  config = mkIf config.oci.enabled {
     perSystem =
       {
         config,

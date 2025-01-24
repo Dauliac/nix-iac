@@ -50,7 +50,7 @@ in
                         rootPath = mkOption {
                           type = types.path;
                           description = "";
-                          default = cfg.oci.sbom.rootPath + "/syft";
+                          default = cfg.oci.sbom.path + "/syft";
                         };
                       };
                     };

@@ -9,7 +9,6 @@ let
     mdDoc
     types
     ;
-  cfg = config.lib;
 in
 {
   options.lib = {
@@ -21,7 +20,6 @@ in
           oci,
           pkgs,
           perSystemConfig,
-          skopeo,
         }:
         let
           archive = config.lib.mkDockerArchive {
@@ -32,7 +30,7 @@ in
         pkgs.runCommandLocal "dive-check"
           {
             buildInputs = [
-              perSystemConfig.pakcages.dive
+              perSystemConfig.packages.dive
             ];
           }
           ''

@@ -1,7 +1,5 @@
 localflake:
-{
-  ...
-}:
+{ ... }:
 {
   imports = [
     (import ./config localflake)

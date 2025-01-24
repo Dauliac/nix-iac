@@ -189,9 +189,7 @@ in
       type = types.functionTo (types.listOf types.str);
       description = mdDoc "A function to get entrypoint of container";
       default =
-        {
-          package,
-        }:
+        { package }:
         let
           entrypoint =
             if package != null then
@@ -230,11 +228,7 @@ in
           inherit (oci) tag name;
           # NOTE: here we can't use mkIf because fromImage with empty value require an empty string
 
-          fromImage =
-            if oci.fromImage == null then
-              ""
-            else
-              cfg.mkOCIPulledManifestLock args;
+          fromImage = if oci.fromImage == null then "" else cfg.mkOCIPulledManifestLock args;
           copyToRoot = [
             (cfg.mkRoot {
               inherit (args) pkgs;

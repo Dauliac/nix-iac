@@ -188,16 +188,16 @@ in
     mkPodmanPolicy = mkOption {
       description = "A function to build podman policy.";
       default =
-      pkgs:
-      pkgs.writeTextDir "etc/containers/policy.json" ''
-        {
-            "default": [
-                {
-                    "type": "insecureAcceptAnything"
-                }
-            ]
-        }
-      '';
+        pkgs:
+        pkgs.writeTextDir "etc/containers/policy.json" ''
+          {
+              "default": [
+                  {
+                      "type": "insecureAcceptAnything"
+                  }
+              ]
+          }
+        '';
     };
   };
 }
