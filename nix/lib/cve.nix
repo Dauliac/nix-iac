@@ -21,14 +21,15 @@ in
           config,
           perSystemConfig,
           containerId,
-          oci,
           pkgs,
         }:
         let
+          oci = args.perSystemConfig.internal.OCIs.${containerId};
           containerConfig = args.perSystemConfig.containers.${containerId}.cve.trivy;
           archive = cfg.lib.mkDockerArchive {
-            inherit (args) oci pkgs;
-            inherit (perSystemConfig) skopeo;
+            inherit (args) pkgs;
+            inherit oci;
+            inherit (perSystemConfig.packages) skopeo;
           };
           ignoreFileFlag =
             if containerConfig.ignore.fileEnabled then "--ignorefile ${containerConfig.ignore.path}" else "";
@@ -52,8 +53,11 @@ in
             set -o errexit
             set -o pipefail
             set -o nounset
-            ${args.perSystemConfig.trivy}/bin/trivy image \
-              --input ${archive} ${ignoreFileFlag} ${extraIgnoreFileFlag} ${containerExtraIgnoreFileFlag} \
+            ${args.perSystemConfig.packages.trivy}/bin/trivy image \
+              --input ${archive} \
+              ${ignoreFileFlag} \
+              ${extraIgnoreFileFlag} \
+              ${containerExtraIgnoreFileFlag} \
               --exit-code 1 \
               --scanners vuln
           '';
