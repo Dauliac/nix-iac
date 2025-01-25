@@ -47,7 +47,7 @@ in
                 perSystemConfig = config.oci;
                 oci = oci.${containerId};
               }
-            ) config.oci.internal.diveOCIs;
+            ) config.oci.internal.CVETrivyOCIs;
           };
           prefixedCVETrivyApps = mkOption {
             type = types.attrs;
@@ -75,9 +75,7 @@ in
               containerId: oci:
               localLib.mkAppCVEGrype {
                 inherit pkgs containerId;
-                config = cfg.oci;
                 perSystemConfig = config.oci;
-                oci = oci.${containerId};
               }
             ) config.oci.internal.CVEGrypeOCIs;
           };
