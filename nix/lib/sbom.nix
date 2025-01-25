@@ -18,17 +18,17 @@ in
       type = types.functionTo types.attrs;
       default =
         args@{
-          config,
           perSystemConfig,
           containerId,
-          oci,
           pkgs,
         }:
         let
+          oci = args.perSystemConfig.internal.OCIs.${containerId};
           containerConfig = args.perSystemConfig.containers.${containerId}.sbom.syft;
           archive = cfg.lib.mkDockerArchive {
-            inherit (args) oci pkgs;
-            inherit (perSystemConfig) skopeo;
+            inherit (args) pkgs;
+            inherit oci;
+            inherit (perSystemConfig.packages) skopeo;
           };
           configFlag =
             if containerConfig.config.enabled then "--config ${containerConfig.config.path}" else "";

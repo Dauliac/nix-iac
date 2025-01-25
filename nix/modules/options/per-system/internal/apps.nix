@@ -104,9 +104,7 @@ in
               containerId: oci:
               localLib.mkAppSBOMSyft {
                 inherit pkgs containerId;
-                config = cfg.oci;
                 perSystemConfig = config.oci;
-                oci = oci.${containerId};
               }
             ) config.oci.internal.SBOMSyftOCIs;
           };
