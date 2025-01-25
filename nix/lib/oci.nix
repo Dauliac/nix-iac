@@ -227,7 +227,9 @@ in
           inherit (oci) tag name;
           # NOTE: here we can't use mkIf because fromImage with empty value require an empty string
 
-          fromImage = if oci.fromImage == null then "" else cfg.mkOCIPulledManifestLock args;
+          fromImage = if oci.fromImage == null then "" else cfg.mkOCIPulledManifestLock {
+            inherit (args) config perSystemConfig containerId;
+          };
           copyToRoot = [
             (cfg.mkRoot {
               inherit (args) pkgs;
