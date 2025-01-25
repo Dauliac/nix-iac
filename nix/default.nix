@@ -1,6 +1,7 @@
 {
   inputs,
   config,
+  lib,
   ...
 }:
 let
@@ -9,6 +10,9 @@ let
     inherit inputs;
     inherit config;
   };
+  inherit (lib)
+    attrValues
+    ;
 in
 {
   imports = [
@@ -34,24 +38,13 @@ in
           packages =
             with pkgs;
             [
-              cosign # TODO: implement cosign script generation
-              conftest # TODO:: implement it
-              trivy # TODO use config package
-              dive # TODO use config package
-              syft # TODO use config package
-              grype # TODO use config package
-              podman # TODO use config package
-              container-structure-test # TODO use config package
-              docker-slim # TODO: check if we can implement it
-              dgoss # Implement it
+              cosign
+              conftest
               bats
               parallel
               lefthook
               convco
-            ]
-            ++ [
-              inputs'.nix2container.packages.skopeo-nix2container
-            ];
+            ] ++ config.oci.internal.packages;
           shellHook = ''
             ${pkgs.lefthook}/bin/lefthook install --force
           '';

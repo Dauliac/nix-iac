@@ -23,10 +23,11 @@ in
       {
         devShells.default = mkIf cfg.oci.enableDevShell (
           pkgs.mkShell {
-            # BUG: fix puller
-            # shellHook = ''
-            #   ${config.packages.oci-updatePulledManifestsLocks}/bin/update-pulled-oci-manifests-locks
-            # '';
+            # NOTE: transform config.packages attrset into list
+            packages = lib.attrValues config.oci.packages;
+            shellHook = ''
+              ${config.packages.oci-updatePulledManifestsLocks}/bin/update-pulled-oci-manifests-locks
+            '';
           }
         );
       };

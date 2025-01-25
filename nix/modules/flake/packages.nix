@@ -24,7 +24,7 @@ in
         packages = lib.mkMerge [
           {
             # BUG: fix puller
-            # oci-updatePulledManifestsLocks = updatePulledOCIManifestLocks;
+            # oci-updatePulledManifestsLocks = updatepulledOCIsManifestLocks;
             oci-all = config.oci.internal.allOCIs;
           }
           config.oci.internal.prefixedOCIs

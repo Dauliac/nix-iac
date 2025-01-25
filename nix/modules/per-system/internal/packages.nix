@@ -26,29 +26,21 @@ in
       }:
       {
         options.oci.internal = {
-          pulledOCI = mkOption {
+          pulledOCIs = mkOption {
             type = types.attrsOf types.package;
             internal = true;
             readOnly = true;
-            default =
-              attrsets.mapAttrs
-                (
-                  containerId: containerConfig:
-                  if containerConfig.fromImage != { } then
-                    config.oci.packages.pullImageFromManifest containerConfig.fromImage
-                    // {
-                      imageManifest = cfg.lib.mkOCIPulledManifestLockPath {
-                        inherit (config.oci.packages) nix2containers;
-                        inherit (cfg.oci) fromImageManifestRootPath;
-                        inherit (containerConfig) fromImage;
-                      };
-                    }
-                  else
-                    null
-                )
-                (
-                  attrsets.filterAttrs (_: containerConfig: containerConfig.fromImage != null) config.oci.containers
-                );
+            default = attrsets.mapAttrs (
+              containerId: containerConfig:
+                localLib.mkOCIPulledManifestLock {
+                  config = cfg.oci;
+                  inherit containerId;
+                  perSystemConfig = config.oci;
+                }
+            )
+            (
+              attrsets.filterAttrs (_: containerConfig: containerConfig.fromImage != null ) config.oci.containers
+            );
           };
           OCIs = mkOption {
             type = types.attrsOf types.package;
@@ -94,7 +86,7 @@ in
                   ) (attrsets.attrNames config.oci.internal.prefixedOCIs)}
                 '';
           };
-          updatePulledOCIManifestLocks = mkOption {
+          updatepulledOCIsManifestLocks = mkOption {
             type = types.package;
             internal = true;
             readOnly = true;
@@ -103,10 +95,9 @@ in
                 pkgs
                 self
                 ;
-              inherit (config.oci.internal) pulledOCI;
-              inherit (config.oci) containers;
-              inherit (cfg.oci) fromImageManifestRootPath;
+              config = cfg.oci;
               perSystemConfig = config.oci;
+
             };
           };
         };

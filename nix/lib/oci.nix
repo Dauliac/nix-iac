@@ -21,26 +21,24 @@ in
           pkgs,
           self,
           perSystemConfig,
-          containers,
-          pulledOCI,
-          fromImageManifestRootPath,
+          config,
         }:
         let
           manifestRootPath = cfg.mkOCIPulledManifestLockRelativeRootPath {
-            inherit fromImageManifestRootPath;
+            inherit (config) fromImageManifestRootPath;
             inherit self;
           };
           update = lib.concatStringsSep "\n" (
             lib.mapAttrsToList (
               containerId: container:
               let
-                inherit (containers.${containerId}) fromImage;
+                inherit (perSystemConfig.containers.${containerId}) fromImage;
                 manifestPath = cfg.mkOCIPulledManifestLockRelativePath {
-                  inherit self fromImageManifestRootPath fromImage;
+                  inherit self;
+                  inherit config perSystemConfig containerId;
                 };
                 manifest = cfg.mkOCIPulledManifestLock {
-                  inherit (perSystemConfig.packages) nix2containers;
-                  inherit fromImageManifestRootPath fromImage;
+                  inherit config perSystemConfig containerId;
                 };
               in
               ''
@@ -50,15 +48,15 @@ in
                   currentContent=$(cat "${manifestPath}")
                   newContent=$(echo "$manifest")
                   if [ "$currentContent" != "$newContent" ]; then
-                    printf "Updating lock manifest for ${containerId}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
+                    printf "Updating lock manifest for ${containerId}::${fromImage.imageName}:${fromImage.imageTag} in ${manifestPath} ...\n"
                     echo "$manifest" > "${manifestPath}"
                   fi
                 else
-                  printf "Generating lock manifest for ${containerId}::${fromImage.imageName}:${fromImage.imageTag} ...\n"
+                  printf "Generating lock manifest for ${containerId}::${fromImage.imageName}:${fromImage.imageTag} in ${manifestPath} ...\n"
                   echo "$manifest" > "${manifestPath}"
                 fi
               ''
-            ) pulledOCI
+            ) perSystemConfig.internal.pulledOCIs
           );
         in
         pkgs.writeShellScriptBin "update-pulled-oci-manifests-locks" ''
@@ -82,7 +80,7 @@ in
         }:
         let
           oci = args.perSystemConfig.containers.${args.containerId};
-          name = lib.strings.replaceStrings [ "/" ] [ "-" ] oci.fromImage.imageName;
+          name = "/" + lib.strings.replaceStrings [ "/" ] [ "-" ] oci.fromImage.imageName;
         in
         config.fromImageManifestRootPath + name + "-" + oci.fromImage.imageTag + "-manifest-lock.json";
     };
@@ -92,23 +90,25 @@ in
       default =
         args:
         "./"
-        + lib.strings.replaceStrings [ ((toString args.self) + "/") ] [ "" ] (
+        + (lib.strings.replaceStrings [ ((toString args.self) + "/") ] [ "" ] (
           toString args.fromImageManifestRootPath
-        );
+        )) + "/";
     };
     mkOCIPulledManifestLockRelativePath = mkOption {
       description = mdDoc "Generate local relive path to download OCI";
       type = types.functionTo types.str;
       default =
-        args:
+        args@{
+          self,
+          config,
+          perSystemConfig,
+          containerId,
+        }:
         "./"
         + lib.strings.replaceStrings [ ((toString args.self) + "/") ] [ "" ] (
           toString (
             cfg.mkOCIPulledManifestLockPath {
-              inherit (args)
-                fromImageManifestRootPath
-                fromImage
-                ;
+              inherit (args) config perSystemConfig containerId;
             }
           )
         );
@@ -118,10 +118,9 @@ in
       type = types.functionTo types.package;
       default =
         args@{
-          config,
           perSystemConfig,
           containerId,
-          ...
+          config,
         }:
         let
           oci = perSystemConfig.containers.${containerId};
@@ -142,7 +141,7 @@ in
         }:
         if package != null then
           lib.strings.toLower package.meta.mainProgram
-        else if fromImage != { } then
+        else if fromImage != null then
           lib.strings.toLower fromImage.imageName
         else
           throw "Error: No valid source for name (name, package.meta.mainProgram, or fromImage.imageName) found.";

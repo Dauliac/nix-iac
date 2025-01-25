@@ -27,7 +27,7 @@ in
             # BUG: fix puller
             oci-updatePulledManifestsLocks = {
               type = "app";
-              program = updatePulledOCIManifestLocks;
+              program = config.oci.internal.updatepulledOCIsManifestLocks;
             };
           }
           config.oci.internal.prefixedContainerStructureTestApps
