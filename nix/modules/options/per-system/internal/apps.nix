@@ -139,9 +139,7 @@ in
               containerId: oci:
               localLib.mkAppCredentialsLeakTrivy {
                 inherit pkgs containerId;
-                config = cfg.oci;
                 perSystemConfig = config.oci;
-                oci = oci.${containerId};
               }
             ) config.oci.internal.credentialsLeakTrivyOCIs;
           };

@@ -18,16 +18,16 @@ in
       type = types.functionTo types.attrs;
       default =
         args@{
-          config,
           perSystemConfig,
           containerId,
-          oci,
           pkgs,
         }:
         let
+          oci = perSystemConfig.internal.OCIs.${containerId};
           archive = cfg.mkDockerArchive {
-            inherit (args) oci pkgs;
-            inherit (perSystemConfig) skopeo;
+            inherit (args) pkgs;
+            inherit oci;
+            inherit (perSystemConfig.packages) skopeo;
           };
         in
         {
