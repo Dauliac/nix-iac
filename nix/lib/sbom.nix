@@ -20,12 +20,12 @@ in
         args@{
           config,
           perSystemConfig,
-          ContainerId,
+          containerId,
           oci,
           pkgs,
         }:
         let
-          containerConfig = args.perSystemConfig.containers.${ContainerId}.sbom.syft;
+          containerConfig = args.perSystemConfig.containers.${containerId}.sbom.syft;
           archive = cfg.lib.mkDockerArchive {
             inherit (args) oci pkgs;
             inherit (perSystemConfig) skopeo;

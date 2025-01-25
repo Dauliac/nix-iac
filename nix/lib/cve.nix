@@ -20,12 +20,12 @@ in
         args@{
           config,
           perSystemConfig,
-          ContainerId,
+          containerId,
           oci,
           pkgs,
         }:
         let
-          containerConfig = args.perSystemConfig.containers.${ContainerId}.cve.trivy;
+          containerConfig = args.perSystemConfig.containers.${containerId}.cve.trivy;
           archive = cfg.lib.mkDockerArchive {
             inherit (args) oci pkgs;
             inherit (perSystemConfig) skopeo;
@@ -66,12 +66,12 @@ in
         args@{
           config,
           perSystemConfig,
-          ContainerId,
+          containerId,
           oci,
           pkgs,
         }:
         let
-          containerConfig = args.perSystemConfig.containers.${ContainerId}.cve.grype;
+          containerConfig = args.perSystemConfig.containers.${containerId}.cve.grype;
           archive = cfg.lib.mkDockerArchive {
             inherit (args) oci pkgs;
             inherit (perSystemConfig) skopeo;

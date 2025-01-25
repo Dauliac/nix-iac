@@ -20,7 +20,8 @@ in
         inputs',
         system,
         ...
-      }: {
+      }:
+      {
         apps = lib.mkMerge [
           {
             # BUG: fix puller

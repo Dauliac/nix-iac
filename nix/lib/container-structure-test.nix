@@ -19,28 +19,26 @@ in
       default =
         {
           pkgs,
-          oci,
           perSystemConfig,
-          ContainerId,
-          config,
+          containerId,
         }:
         let
           policy = cfg.mkPodmanPolicy pkgs;
+          oci = perSystemConfig.internal.OCIs.${containerId};
           configFlags = lib.concatStringsSep " " (
             lib.map (
               config: "--config=${config}"
-            ) config.containers.${ContainerId}.containerStructureTest.configs
+            ) perSystemConfig.containers.${containerId}.containerStructureTest.configs
           );
 
           # TODO: add option to configure tests output format
           cst = pkgs.writeShellScriptBin "container-structure-test" ''
             ${oci.copyToPodman}/bin/copy-to-podman
+            set -x
             ${perSystemConfig.packages.containerStructureTest}/bin/container-structure-test \
               test --image "${oci.imageName}:${oci.imageTag}" \
               --runtime podman \
               --output text \
-              --output junit \
-              --test-report cst-${ContainerId}.junit.xml \
               "${configFlags}"
           '';
           envRunScript = pkgs.writeScriptBin "run" ''

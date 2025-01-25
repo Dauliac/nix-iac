@@ -39,10 +39,10 @@ in
             internal = true;
             readOnly = true;
             default = attrsets.mapAttrs (
-              ContainerId: oci:
+              containerId: oci:
               localLib.mkCheckDive {
                 inherit pkgs;
-                oci = config.oci.internal.OCIs.${ContainerId};
+                oci = config.oci.internal.OCIs.${containerId};
                 perSystemConfig = config.oci;
               }
             ) config.oci.internal.diveOCIs;
