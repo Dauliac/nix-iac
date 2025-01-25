@@ -37,3 +37,4 @@ pre-commit:
       run: |
         nix run '.#oci-cve-trivy-minimalistWithTrivyIgnoreAndExtra'
         nix run '.#oci-cve-trivy-minimalistWithTrivyIgnore'
+        nix run '.#oci-container-structure-test-minimalistWithContainerStructureTest'

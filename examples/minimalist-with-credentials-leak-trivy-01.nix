@@ -9,7 +9,7 @@
       }:
       {
         config.oci.containers = {
-          minimalistWithTrivy = {
+          minimalistWithCredentialsLeaksTrivy = {
             package = pkgs.kubectl;
             credentialsLeak.trivy = {
               enabled = true;

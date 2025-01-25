@@ -25,10 +25,10 @@ in
         apps = lib.mkMerge [
           {
             # BUG: fix puller
-            # oci-updatePulledManifestsLocks = {
-            #   type = "app";
-            #   program = updatePulledOCIManifestLocks;
-            # };
+            oci-updatePulledManifestsLocks = {
+              type = "app";
+              program = updatePulledOCIManifestLocks;
+            };
           }
           config.oci.internal.prefixedContainerStructureTestApps
           config.oci.internal.prefixedCVEGrypeApps
