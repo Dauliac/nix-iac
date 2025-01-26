@@ -4,7 +4,7 @@
   ...
 }:
 let
-  cfg = config;
+  cfg = config.lib;
   inherit (lib)
     mkOption
     mdDoc
@@ -13,7 +13,7 @@ let
 in
 {
   options.lib = {
-    mkAppSBOMSyft = mkOption {
+    mkScriptSBOMSyft = mkOption {
       description = mdDoc "To build syft app to check for CVEs on OCI.";
       type = types.functionTo types.attrs;
       default =
@@ -25,7 +25,7 @@ in
         let
           oci = args.perSystemConfig.internal.OCIs.${containerId};
           containerConfig = args.perSystemConfig.containers.${containerId}.sbom.syft;
-          archive = cfg.lib.mkDockerArchive {
+          archive = cfg.mkDockerArchive {
             inherit (args) pkgs;
             inherit oci;
             inherit (perSystemConfig.packages) skopeo;
@@ -33,9 +33,7 @@ in
           configFlag =
             if containerConfig.config.enabled then "--config ${containerConfig.config.path}" else "";
         in
-        {
-          type = "app";
-          program = args.pkgs.writeShellScriptBin "syft" ''
+          args.pkgs.writeShellScriptBin "syft" ''
             set -o errexit
             set -o pipefail
             set -o nounset
@@ -43,6 +41,19 @@ in
               ${configFlag} \
               ${archive}
           '';
+    };
+    mkAppSBOMSyft = mkOption {
+      description = mdDoc "To build syft app to check for CVEs on OCI.";
+      type = types.functionTo types.attrs;
+      default =
+        args@{
+          perSystemConfig,
+          containerId,
+          pkgs,
+        }:
+        {
+          type = "app";
+          program = cfg.mkScriptSBOMSyft args;
         };
     };
   };

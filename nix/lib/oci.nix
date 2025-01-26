@@ -213,7 +213,30 @@ in
         let
           oci = args.perSystemConfig.containers.${args.containerId};
         in
-        if oci.installNix then cfg.mkNixOCI args else cfg.mkSimpleOCI args;
+        (if oci.installNix then cfg.mkNixOCI args else cfg.mkSimpleOCI args)
+         //
+         (if oci.cve.trivy.enabled then {
+          cve.trivy = cfg.mkScriptCVETrivy {
+            inherit pkgs containerId perSystemConfig config;
+          };
+        } else if oci.cve.grype.enabled then {
+          cve.grype = cfg.mkScriptCVEGrype {
+            inherit pkgs containerId perSystemConfig;
+          };
+        } else if oci.sbom.syft.enabled then {
+          sbom.syft = cfg.mkScriptSBOMSyft {
+            inherit pkgs containerId perSystemConfig;
+          };
+        } else if oci.credentialsLeak.trivy.enabled then {
+          credentialsLeak.trivy = cfg.mkScriptCredentialsLeakTrivy {
+            inherit pkgs containerId perSystemConfig;
+          };
+        } else if oci.containerStructureTest.enabled then {
+          containerStructureTest = cfg.mkScriptContainerStructureTest {
+            inherit pkgs containerId perSystemConfig;
+          };
+        }
+        else {});
     };
     mkSimpleOCI = mkOption {
       description = mdDoc "A function to build simple container";

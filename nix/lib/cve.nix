@@ -4,7 +4,7 @@
   ...
 }:
 let
-  cfg = config;
+  cfg = config.lib;
   inherit (lib)
     mkOption
     mdDoc
@@ -13,7 +13,7 @@ let
 in
 {
   options.lib = {
-    mkAppCVETrivy = mkOption {
+    mkScriptCVETrivy = mkOption {
       description = mdDoc "To build trivy app to check for CVEs on OCI.";
       type = types.functionTo types.attrs;
       default =
@@ -26,7 +26,7 @@ in
         let
           oci = args.perSystemConfig.internal.OCIs.${containerId};
           containerConfig = args.perSystemConfig.containers.${containerId}.cve.trivy;
-          archive = cfg.lib.mkDockerArchive {
+          archive = cfg.mkDockerArchive {
             inherit (args) pkgs;
             inherit oci;
             inherit (perSystemConfig.packages) skopeo;
@@ -47,9 +47,7 @@ in
             else
               "";
         in
-        {
-          type = "app";
-          program = args.pkgs.writeShellScriptBin "trivy" ''
+          args.pkgs.writeShellScriptBin "trivy" ''
             set -o errexit
             set -o pipefail
             set -o nounset
@@ -61,7 +59,44 @@ in
               --exit-code 1 \
               --scanners vuln
           '';
+    };
+    mkAppCVETrivy = mkOption {
+      description = mdDoc "To build trivy app to check for CVEs on OCI.";
+      type = types.functionTo types.attrs;
+      default =
+       args:
+        {
+          type = "app";
+          program = cfg.mkScriptCVETrivy args ;
         };
+    };
+    mkScriptCVEGrype = mkOption {
+      description = mdDoc "To build grype app to check for CVEs on OCI.";
+      type = types.functionTo types.attrs;
+      default =
+        args@{
+          perSystemConfig,
+          containerId,
+          pkgs,
+        }: let
+          oci = args.perSystemConfig.internal.OCIs.${containerId};
+          containerConfig = args.perSystemConfig.containers.${containerId}.cve.grype;
+          archive = cfg.mkDockerArchive {
+            inherit (args) pkgs;
+            inherit oci;
+            inherit (perSystemConfig.packages) skopeo;
+          };
+          configFlag =
+            if containerConfig.config.enabled then "--config ${containerConfig.config.path}" else "";
+        in
+          args.pkgs.writeShellScriptBin "grype" ''
+            set -o errexit
+            set -o pipefail
+            set -o nounset
+            ${args.perSystemConfig.packages.grype}/bin/grype \
+              ${configFlag} \
+              ${archive}
+          '';
     };
     mkAppCVEGrype = mkOption {
       description = mdDoc "To build grype app to check for CVEs on OCI.";
@@ -72,27 +107,9 @@ in
           containerId,
           pkgs,
         }:
-        let
-          oci = args.perSystemConfig.internal.OCIs.${containerId};
-          containerConfig = args.perSystemConfig.containers.${containerId}.cve.grype;
-          archive = cfg.lib.mkDockerArchive {
-            inherit (args) pkgs;
-            inherit oci;
-            inherit (perSystemConfig.packages) skopeo;
-          };
-          configFlag =
-            if containerConfig.config.enabled then "--config ${containerConfig.config.path}" else "";
-        in
         {
           type = "app";
-          program = args.pkgs.writeShellScriptBin "grype" ''
-            set -o errexit
-            set -o pipefail
-            set -o nounset
-            ${args.perSystemConfig.packages.grype}/bin/grype \
-              ${configFlag} \
-              ${archive}
-          '';
+          program = cfg.mkScriptCVEGrype args;
         };
     };
   };

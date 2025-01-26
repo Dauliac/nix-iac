@@ -13,7 +13,7 @@ let
 in
 {
   options.lib = {
-    mkAppCredentialsLeakTrivy = mkOption {
+    mkScriptCredentialsLeakTrivy = mkOption {
       description = mdDoc "To build trivy app to check for CVEs on OCI.";
       type = types.functionTo types.attrs;
       default =
@@ -30,9 +30,7 @@ in
             inherit (perSystemConfig.packages) skopeo;
           };
         in
-        {
-          type = "app";
-          program = args.pkgs.writeShellScriptBin "trivy" ''
+        args.pkgs.writeShellScriptBin "trivy" ''
             set -o errexit
             set -o pipefail
             set -o nounset
@@ -41,7 +39,20 @@ in
               --input ${archive} \
               --exit-code 1 \
               --scanners secret
-          '';
+        '';
+    };
+    mkAppCredentialsLeakTrivy = mkOption {
+      description = mdDoc "To build trivy app to check for CVEs on OCI.";
+      type = types.functionTo types.attrs;
+      default =
+        args@{
+          perSystemConfig,
+          containerId,
+          pkgs,
+        }:
+        {
+          type = "app";
+          program = cfg.mkScriptCredentialsLeakTrivy args;
         };
     };
   };
