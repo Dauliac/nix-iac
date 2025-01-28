@@ -52,5 +52,13 @@ in
           ${fhsEnv}/bin/${name}
         '';
     };
+    mkAppDgoss = mkOption {
+      description = mdDoc "";
+      type = types.functionTo types.attrs;
+      default = args: {
+        type = "app";
+        program = cfg.mkScriptDgoss args;
+      };
+    };
   };
 }

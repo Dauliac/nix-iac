@@ -24,7 +24,7 @@ in
             path = mkOption {
               type = types.path;
               description = "";
-              default = cfg.oci.rootPath + "sbom/";
+              default = cfg.oci.rootPath;
             };
             # TODO include slim sbom
             syft = mkOption {
@@ -50,7 +50,7 @@ in
                         rootPath = mkOption {
                           type = types.path;
                           description = "";
-                          default = cfg.oci.sbom.path + "/syft";
+                          default = cfg.oci.sbom.path;
                         };
                       };
                     };

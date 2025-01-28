@@ -31,7 +31,7 @@ in
             readOnly = true;
             default = localLib.filterEnabledOutputsSet {
               config = config.oci.containers;
-              subConfig = "dive";
+              subConfig = "test.dive";
             };
           };
           diveChecks = mkOption {

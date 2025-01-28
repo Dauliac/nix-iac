@@ -68,6 +68,16 @@ in
                 description = "The nix2container package.";
                 default = localflake.inputs.nix2container.packages.${system}.nix2container;
               };
+              dgoss = mkOption {
+                type = types.package;
+                description = "The package to use for dgoss.";
+                default = localflake.inputs.nixpkgs.legacyPackages.${system}.dgoss;
+              };
+              skaffold = mkOption {
+                type = types.package;
+                description = "The package to use for skaffold.";
+                default = localflake.inputs.nixpkgs.legacyPackages.${system}.skaffold;
+              };
             };
           };
         };

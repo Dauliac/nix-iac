@@ -38,12 +38,12 @@ in
       };
       rootPath = mkOption {
         type = types.path;
-        default = self + "/.oci/";
+        default = self + "/oci/";
         description = "The root path to store the nix OCI resources.";
       };
       fromImageManifestRootPath = mkOption {
         type = types.path;
-        default = cfg.oci.rootPath + "/pulledManifests/";
+        default = cfg.oci.rootPath + "/pulledManifestsLocks/";
         description = "The root path to store the pulled OCI image manifest json lockfiles.";
       };
       registry = mkOption {

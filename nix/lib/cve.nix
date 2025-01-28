@@ -47,28 +47,26 @@ in
             else
               "";
         in
-          args.pkgs.writeShellScriptBin "trivy" ''
-            set -o errexit
-            set -o pipefail
-            set -o nounset
-            ${args.perSystemConfig.packages.trivy}/bin/trivy image \
-              --input ${archive} \
-              ${ignoreFileFlag} \
-              ${extraIgnoreFileFlag} \
-              ${containerExtraIgnoreFileFlag} \
-              --exit-code 1 \
-              --scanners vuln
-          '';
+        args.pkgs.writeShellScriptBin "trivy" ''
+          set -o errexit
+          set -o pipefail
+          set -o nounset
+          ${args.perSystemConfig.packages.trivy}/bin/trivy image \
+            --input ${archive} \
+            ${ignoreFileFlag} \
+            ${extraIgnoreFileFlag} \
+            ${containerExtraIgnoreFileFlag} \
+            --exit-code 1 \
+            --scanners vuln
+        '';
     };
     mkAppCVETrivy = mkOption {
       description = mdDoc "To build trivy app to check for CVEs on OCI.";
       type = types.functionTo types.attrs;
-      default =
-       args:
-        {
-          type = "app";
-          program = cfg.mkScriptCVETrivy args ;
-        };
+      default = args: {
+        type = "app";
+        program = cfg.mkScriptCVETrivy args;
+      };
     };
     mkScriptCVEGrype = mkOption {
       description = mdDoc "To build grype app to check for CVEs on OCI.";
@@ -78,7 +76,8 @@ in
           perSystemConfig,
           containerId,
           pkgs,
-        }: let
+        }:
+        let
           oci = args.perSystemConfig.internal.OCIs.${containerId};
           containerConfig = args.perSystemConfig.containers.${containerId}.cve.grype;
           archive = cfg.mkDockerArchive {
@@ -89,14 +88,14 @@ in
           configFlag =
             if containerConfig.config.enabled then "--config ${containerConfig.config.path}" else "";
         in
-          args.pkgs.writeShellScriptBin "grype" ''
-            set -o errexit
-            set -o pipefail
-            set -o nounset
-            ${args.perSystemConfig.packages.grype}/bin/grype \
-              ${configFlag} \
-              ${archive}
-          '';
+        args.pkgs.writeShellScriptBin "grype" ''
+          set -o errexit
+          set -o pipefail
+          set -o nounset
+          ${args.perSystemConfig.packages.grype}/bin/grype \
+            ${configFlag} \
+            ${archive}
+        '';
     };
     mkAppCVEGrype = mkOption {
       description = mdDoc "To build grype app to check for CVEs on OCI.";

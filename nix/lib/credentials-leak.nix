@@ -31,14 +31,14 @@ in
           };
         in
         args.pkgs.writeShellScriptBin "trivy" ''
-            set -o errexit
-            set -o pipefail
-            set -o nounset
-            set -x
-            ${args.perSystemConfig.packages.trivy}/bin/trivy image \
-              --input ${archive} \
-              --exit-code 1 \
-              --scanners secret
+          set -o errexit
+          set -o pipefail
+          set -o nounset
+          set -x
+          ${args.perSystemConfig.packages.trivy}/bin/trivy image \
+            --input ${archive} \
+            --exit-code 1 \
+            --scanners secret
         '';
     };
     mkAppCredentialsLeakTrivy = mkOption {

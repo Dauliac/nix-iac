@@ -10,7 +10,6 @@ let
   inherit (lib)
     mkOption
     types
-    attrValues
     ;
 in
 {
@@ -29,13 +28,15 @@ in
             internal = true;
             readOnly = true;
             default = with config.oci.packages; [
-             skopeo
-             containerStructureTest
-             podman
-             grype
-             syft
-             trivy
-             dive
+              skopeo
+              containerStructureTest
+              podman
+              grype
+              syft
+              trivy
+              dive
+              dgoss
+              skaffold
             ];
           };
         };

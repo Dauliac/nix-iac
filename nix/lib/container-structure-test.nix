@@ -28,7 +28,7 @@ in
           configFlags = lib.concatStringsSep " " (
             lib.map (
               config: "--config=${config}"
-            ) perSystemConfig.containers.${containerId}.containerStructureTest.configs
+            ) perSystemConfig.containers.${containerId}.test.containerStructureTest.configs
           );
 
           # TODO: add option to configure tests output format

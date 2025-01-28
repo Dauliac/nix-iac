@@ -24,7 +24,7 @@ in
             # TODO: normalize name of config path dir
             configPath = mkOption {
               type = types.path;
-              default = cfg.oci.rootPath + "/cve/";
+              default = cfg.oci.rootPath;
               description = "";
             };
             trivy = mkOption {
@@ -50,7 +50,7 @@ in
                         rootPath = mkOption {
                           type = types.path;
                           description = "";
-                          default = cfg.oci.cve.configPath + "/trivy/";
+                          default = cfg.oci.cve.configPath;
                         };
                         extra = mkOption {
                           type = types.listOf types.str;

@@ -15,27 +15,45 @@ in
 {
   options = {
     oci = {
-      # TODO: move it into test submodule
-      dive = mkOption {
+      test = mkOption {
         default = { };
         type = types.submodule {
           options = {
-            enabled = mkOption {
-              type = types.bool;
-              description = "";
-              default = false;
+            dive = mkOption {
+              default = { };
+              type = types.submodule {
+                options = {
+                  enabled = mkOption {
+                    type = types.bool;
+                    description = "";
+                    default = false;
+                  };
+                };
+              };
             };
-          };
-        };
-      };
-      containerStructureTest = mkOption {
-        default = { };
-        type = types.submodule {
-          options = {
-            enabled = mkOption {
-              type = types.bool;
-              description = "";
-              default = false;
+            containerStructureTest = mkOption {
+              default = { };
+              type = types.submodule {
+                options = {
+                  enabled = mkOption {
+                    type = types.bool;
+                    description = "";
+                    default = false;
+                  };
+                };
+              };
+            };
+            dgoss = mkOption {
+              default = { };
+              type = types.submodule {
+                options = {
+                  enabled = mkOption {
+                    type = types.bool;
+                    description = "";
+                    default = false;
+                  };
+                };
+              };
             };
           };
         };

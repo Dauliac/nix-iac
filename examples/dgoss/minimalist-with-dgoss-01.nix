@@ -9,9 +9,11 @@
       }:
       {
         config.oci.containers = {
-          minimalistWithDive = {
+          minimalistWithDgoss = {
             package = pkgs.kubectl;
-            test.dive.enabled = true;
+            test.dgoss = {
+              enabled = true;
+            };
           };
         };
       };

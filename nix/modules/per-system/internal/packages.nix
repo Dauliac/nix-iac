@@ -30,17 +30,19 @@ in
             type = types.attrsOf types.package;
             internal = true;
             readOnly = true;
-            default = attrsets.mapAttrs (
-              containerId: containerConfig:
-                localLib.mkOCIPulledManifestLock {
-                  config = cfg.oci;
-                  inherit containerId;
-                  perSystemConfig = config.oci;
-                }
-            )
-            (
-              attrsets.filterAttrs (_: containerConfig: containerConfig.fromImage != null ) config.oci.containers
-            );
+            default =
+              attrsets.mapAttrs
+                (
+                  containerId: containerConfig:
+                  localLib.mkOCIPulledManifestLock {
+                    config = cfg.oci;
+                    inherit containerId;
+                    perSystemConfig = config.oci;
+                  }
+                )
+                (
+                  attrsets.filterAttrs (_: containerConfig: containerConfig.fromImage != null) config.oci.containers
+                );
           };
           OCIs = mkOption {
             type = types.attrsOf types.package;
@@ -97,7 +99,6 @@ in
                 ;
               config = cfg.oci;
               perSystemConfig = config.oci;
-
             };
           };
         };

@@ -32,9 +32,7 @@ pre-commit:
     update-pulled-manifests-locks:
       run: |
         nix run '.#oci-updatePulledManifestsLocks'
-    trivy:
+    test:
       tags: checks
       run: |
-        nix run '.#oci-cve-trivy-minimalistWithTrivyIgnoreAndExtra'
-        nix run '.#oci-cve-trivy-minimalistWithTrivyIgnore'
-        nix run '.#oci-container-structure-test-minimalistWithContainerStructureTest'
+        task test --verbose --output prefixed

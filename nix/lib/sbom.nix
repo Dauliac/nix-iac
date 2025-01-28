@@ -33,14 +33,14 @@ in
           configFlag =
             if containerConfig.config.enabled then "--config ${containerConfig.config.path}" else "";
         in
-          args.pkgs.writeShellScriptBin "syft" ''
-            set -o errexit
-            set -o pipefail
-            set -o nounset
-            ${args.perSystemConfig.packages.syft}/bin/syft \
-              ${configFlag} \
-              ${archive}
-          '';
+        args.pkgs.writeShellScriptBin "syft" ''
+          set -o errexit
+          set -o pipefail
+          set -o nounset
+          ${args.perSystemConfig.packages.syft}/bin/syft \
+            ${configFlag} \
+            ${archive}
+        '';
     };
     mkAppSBOMSyft = mkOption {
       description = mdDoc "To build syft app to check for CVEs on OCI.";

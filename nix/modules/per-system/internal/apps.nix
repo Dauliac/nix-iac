@@ -153,7 +153,7 @@ in
             readOnly = true;
             default = localLib.filterEnabledOutputsSet {
               config = config.oci.containers;
-              subConfig = "containerStructureTest";
+              subConfig = "test.containerStructureTest";
             };
           };
           containerStructureTestOCIsApps = mkOption {
@@ -175,6 +175,36 @@ in
             default = localLib.prefixOutputs {
               prefix = "oci-container-structure-test-";
               set = config.oci.internal.containerStructureTestOCIsApps;
+            };
+          };
+          dgossOCIs = mkOption {
+            type = types.attrs;
+            internal = true;
+            readOnly = true;
+            default = localLib.filterEnabledOutputsSet {
+              config = config.oci.containers;
+              subConfig = "test.dgoss";
+            };
+          };
+          dgossOCIsApps = mkOption {
+            type = types.attrs;
+            internal = true;
+            readOnly = true;
+            default = attrsets.mapAttrs (
+              containerId: oci:
+              localLib.mkAppDgoss {
+                inherit pkgs containerId;
+                perSystemConfig = config.oci;
+              }
+            ) config.oci.internal.dgossOCIs;
+          };
+          prefixedDgossApps = mkOption {
+            type = types.attrs;
+            internal = true;
+            readOnly = true;
+            default = localLib.prefixOutputs {
+              prefix = "oci-dgoss-";
+              set = config.oci.internal.dgossOCIsApps;
             };
           };
         };

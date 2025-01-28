@@ -31,6 +31,11 @@ in
               { name, ... }:
               {
                 options = {
+                  rootPath = mkOption {
+                    type = types.path;
+                    description = "The root path for the container.";
+                    default = config.oci.rootPath + name + "/";
+                  };
                   tag = mkOption {
                     type = types.nullOr types.str;
                     description = "Tag of the container.";
@@ -38,31 +43,64 @@ in
                       inherit (config.oci.containers.${name}) package fromImage;
                     };
                   };
-                  dive = mkOption {
+                  test = mkOption {
+                    description = ".";
                     default = { };
                     type = types.submodule {
                       options = {
-                        enabled = mkOption {
-                          type = types.bool;
-                          description = "Whether to run dive.";
-                          default = cfg.oci.dive.enabled;
+                        rootPath = mkOption {
+                          type = types.path;
+                          description = "The root path for the test.";
+                          default = config.oci.containers.${name}.rootPath + "test/";
                         };
-                      };
-                    };
-                  };
-                  containerStructureTest = mkOption {
-                    default = { };
-                    type = types.submodule {
-                      options = {
-                        enabled = mkOption {
-                          type = types.bool;
-                          description = "Whether to run container-structure-test.";
-                          default = cfg.oci.containerStructureTest.enabled;
+                        dive = mkOption {
+                          default = { };
+                          type = types.submodule {
+                            options = {
+                              enabled = mkOption {
+                                type = types.bool;
+                                description = "Whether to run dive.";
+                                default = cfg.oci.test.dive.enabled;
+                              };
+                            };
+                          };
                         };
-                        configs = mkOption {
-                          type = types.listOf types.path;
-                          description = "The container-structure-test configs file to run.";
-                          default = [ ];
+                        containerStructureTest = mkOption {
+                          default = { };
+                          type = types.submodule {
+                            options = {
+                              enabled = mkOption {
+                                type = types.bool;
+                                description = "Whether to run container-structure-test.";
+                                default = cfg.oci.test.containerStructureTest.enabled;
+                              };
+                              configs = mkOption {
+                                type = types.listOf types.path;
+                                description = "The container-structure-test configs file to run.";
+                                default = [
+                                  (config.oci.containers.${name}.test.rootPath + "container-structure-test.yaml")
+                                ];
+                              };
+                            };
+                          };
+                        };
+                        dgoss = mkOption {
+                          description = "The package to use for dgoss.";
+                          default = { };
+                          type = types.submodule {
+                            options = {
+                              enabled = mkOption {
+                                type = types.bool;
+                                description = "Whether to run dgoss.";
+                                default = cfg.oci.test.dgoss.enabled;
+                              };
+                              optionsPath = mkOption {
+                                type = types.path;
+                                description = "The path to the dgoss options.";
+                                default = config.oci.containers.${name}.test.rootPath + "dgoss.yaml";
+                              };
+                            };
+                          };
                         };
                       };
                     };
@@ -93,6 +131,11 @@ in
                     default = { };
                     type = types.submodule {
                       options = {
+                        rootPath = mkOption {
+                          type = types.path;
+                          description = "The root path for the sbom.";
+                          default = config.oci.containers.${name}.rootPath + "sbom/";
+                        };
                         syft = mkOption {
                           description = "";
                           default = { };
@@ -116,7 +159,7 @@ in
                                     path = mkOption {
                                       type = types.path;
                                       description = "";
-                                      default = cfg.oci.sbom.syft.config.rootPath + name + ".yaml";
+                                      default = config.oci.containers.${name}.sbom.rootPath + "syft.yaml";
                                     };
                                   };
                                 };
@@ -132,6 +175,11 @@ in
                     default = { };
                     type = types.submodule {
                       options = {
+                        rootPath = mkOption {
+                          type = types.path;
+                          description = "";
+                          default = config.oci.containers.${name}.rootPath + "cve/";
+                        };
                         trivy = mkOption {
                           description = "The package to use for the cve check.";
                           default = { };
@@ -151,7 +199,7 @@ in
                                     path = mkOption {
                                       type = types.nullOr types.path;
                                       description = "";
-                                      default = cfg.oci.cve.trivy.ignore.rootPath + name + ".ignore";
+                                      default = config.oci.containers.${name}.cve.rootPath + "trivy.ignore";
                                     };
                                     extra = mkOption {
                                       type = types.listOf types.str;
@@ -187,7 +235,7 @@ in
                                     path = mkOption {
                                       type = types.path;
                                       description = "";
-                                      default = cfg.oci.cve.grype.config.rootPath + name + ".yaml";
+                                      default = config.oci.containers.${name}.cve.rootPath + "grype.yaml";
                                     };
                                   };
                                 };

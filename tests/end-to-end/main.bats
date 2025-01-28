@@ -13,7 +13,7 @@
   [ "$status" -eq 0 ]
 }
 
-# BUG check why bats
+# BUG check why bats broke container-structure-test
 # @test "Nix run container-structure-test minimalistWithContainerStructureTest" {
 #   env
 #   run nix run '.#oci-container-structure-test-minimalistWithContainerStructureTest'
@@ -32,5 +32,15 @@
 
 @test "Update pulled manifests locks works" {
   run nix run '.#oci-updatePulledManifestsLocks'
+  [ "$status" -eq 0 ]
+}
+
+@test "Nix run sbom syft" {
+  run nix run '.#oci-sbom-syft-minimalistWithSyft'
+  [ "$status" -eq 0 ]
+}
+
+@test "Nix run credentials leaks trivy" {
+  run nix run '.#oci-credentials-leak-minimalistWithCredentialsLeaksTrivy'
   [ "$status" -eq 0 ]
 }

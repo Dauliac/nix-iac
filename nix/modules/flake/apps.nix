@@ -30,10 +30,11 @@ in
               program = config.oci.internal.updatepulledOCIsManifestLocks;
             };
           }
-          config.oci.internal.prefixedContainerStructureTestApps
           config.oci.internal.prefixedCVEGrypeApps
           config.oci.internal.prefixedCVETrivyApps
+          config.oci.internal.prefixedContainerStructureTestApps
           config.oci.internal.prefixedCredentialsLeakTrivyApps
+          config.oci.internal.prefixedDgossApps
           config.oci.internal.prefixedSBOMSyftApps
         ];
       };

@@ -44,7 +44,8 @@ in
               parallel
               lefthook
               convco
-            ] ++ config.oci.internal.packages;
+            ]
+            ++ config.oci.internal.packages;
           shellHook = ''
             ${pkgs.lefthook}/bin/lefthook install --force
           '';
